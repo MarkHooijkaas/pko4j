@@ -1,0 +1,111 @@
+<project name="pko4j" default="jar">
+	<target name="init">
+		<property file="user.properties"/>
+		<property file="version.properties"/>
+		
+		<property name="projectname" value="pko4j"/>
+		<property file="buildnumber.properties"/>
+		<property name="srcdir" value="src/main"/>
+		<property name="libdir" value="lib"/>
+		<property name="builddir" value="build"/>
+		<mkdir dir="${builddir}" />
+		<mkdir dir="${builddir}/classes" />
+	</target>
+	
+	<path id="build.classpath">
+	  <fileset dir="${basedir}">
+	     <include name="lib/*.jar"/>
+	  </fileset>
+	</path>
+
+	<pathconvert property="manifest.classpath" pathsep=" ">
+	  <path refid="build.classpath"/>
+	  <mapper>
+	    <chainedmapper>
+	       <flattenmapper/>
+	       <globmapper from="*.jar" to="lib/*.jar"/>
+	    </chainedmapper>
+	  </mapper>
+	</pathconvert>
+
+	<target depends="compile" name="buildjar">
+	  <jar jarfile="${basedir}/${test.jar}">
+	     <fileset dir="${build}" />
+	     <manifest>
+	       <attribute name="Main-Class" value="com.mycompany.TestMain"/>
+	       <attribute name="Class-Path" value="${manifest.classpath}"/>
+	     </manifest>
+	 </jar>
+	</target>
+	
+	<target name="compile" description="Compiles Java files" depends="init">
+		<javac srcdir="${srcdir}/java" destdir="${builddir}/classes" debug="on" optimize="on" target="1.8"  includeantruntime="false">
+		    <compilerarg value="-Xlint"/>
+			<classpath>
+				<fileset dir="lib">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="jar" description="creates a jar file" depends="compile">
+		<jar jarfile="${projectname}-${project.version}.jar"  basedir="${builddir}/classes" includes="**" excludes="test/**">
+			<manifest>
+				<attribute name="Implementation-Vendor" value="org.kisst"/>
+				<attribute name="Implementation-Title" value="${projectname}"/>
+				<attribute name="Implementation-Version" value="${project.version}"/> 
+				<attribute name="Class-Path" value="${manifest.classpath}"/>
+			</manifest>
+			<zipfileset dir="." includes="version.properties"/>
+	    </jar>
+	</target>
+
+	<target name="fulljar" description="creates a jar file" depends="compile">
+		<jar jarfile="${projectname}-full-${project.version}.jar"  basedir="${builddir}/classes" includes="**" excludes="test/**">
+			<manifest>
+				<attribute name="Implementation-Vendor" value="org.kisst"/>
+				<attribute name="Implementation-Title" value="${projectname}"/>
+				<attribute name="Implementation-Version" value="${project.version}"/> 
+				<attribute name="Class-Path" value="${manifest.classpath}"/>
+			</manifest>
+			<zipfileset dir="." includes="version.properties"/>
+	    </jar>
+	</target>
+
+	
+	<target name="libs" description="creates a zip file for all lib files" depends="init">
+		<zip destfile="${builddir}/${projectname}-${project.version}-libs.zip" >
+			<zipfileset dir="." includes="lib/*"/>
+		</zip>
+	</target>
+	<target name="dist" description="creates a zip file for distribution" depends="jar">
+		<zip destfile="${builddir}/${projectname}-${project.version}-full.zip" >
+			<fileset dir="." includes="COPYING"/>
+			<zipfileset dir="." includes="${projectname}*.jar"/>
+			<zipfileset dir="lib" prefix="lib" includes="*.jar"/>
+			<fileset dir="." includes=".gitignore" defaultexcludes="false"/>
+		</zip>
+	</target>
+
+	<target name="clean" depends="init">
+  		<delete dir="${builddir}/classes" />
+  	</target>
+  	
+  	<target name="test" depends="compile,file-test"/>
+  	<target name="file-test" depends="">
+  	      <java classname="test.Main"
+           fork="true"
+           failonerror="true"
+           maxmemory="128m"
+           >
+         <arg value="file"/>
+         <classpath>
+			<fileset dir="lib">
+				<include name="**/*.jar"/>
+			</fileset>
+           <pathelement location="build/classes"/>
+         </classpath>
+       </java>
+    </target>
+</project>
