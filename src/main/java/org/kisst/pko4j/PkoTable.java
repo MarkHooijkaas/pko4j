@@ -14,37 +14,28 @@ import org.kisst.util.ArrayUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
+public class PkoTable<MT extends PkoModel, T extends PkoObject<MT>> implements TypedSequence<T> {
 	public static final Logger logger = LoggerFactory.getLogger(PkoTable.class);
 	
-	protected final PkoSchema<T> schema;
-	protected final PkoModel model;
+	public final PkoModel model;
+	public final PkoSchema<MT, T> schema;
 	private final String name;
 	final StructStorage storage;
-	private final MemoryUniqueIndex<T> cache;
-	private final ChangeHandler<T>[] indices;
+	private final MemoryUniqueIndex<MT, T> objects;
+	private final ChangeHandler<MT, T>[] indices;
 
 	private boolean alwaysCheckId=true;
 	@SuppressWarnings("unchecked")
-	public PkoTable(PkoModel model, PkoSchema<T> schema) { 
+	public PkoTable(PkoModel model, PkoSchema<MT, T> schema) { 
 		this.model=model;
 		this.schema=schema;
 		this.name=schema.getJavaClass().getSimpleName();
 		this.storage=model.getStorage(schema.getJavaClass());
-		if (storage.useCache()) {
-			cache=new MemoryUniqueIndex<T>(schema, false, new PkoSchema.IdField());
-			this.indices=(ChangeHandler<T>[]) ArrayUtil.join(cache,model.getIndices(schema.getJavaClass()));
-		}
-		else {
-			cache=null;
-			this.indices=model.getIndices(schema.getJavaClass());
-
-		}
+		objects=new MemoryUniqueIndex<MT, T>(schema, false, new PkoSchema.IdField());
+		this.indices=(ChangeHandler<MT, T>[]) ArrayUtil.join(objects,model.getIndices(schema.getJavaClass()));
 	}
 	// This can not be done in the constructor, because then the KeyObjects will have a null table
 	public void initcache() { 
-		if (cache==null) 
-			return;
 		//System.out.println("Loading all "+name+" records to cache");
 		TypedSequence<Struct> seq = storage.findAll();
 		for (Struct rec:seq) {
@@ -56,7 +47,7 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 		}
 	}
 	public void close() { storage.close(); }
-	public PkoSchema<T> getSchema() { return schema; }
+	public PkoSchema<MT, T> getSchema() { return schema; }
 	public String getName() { return name; }
 	public String getKey(T obj) { return obj._id; }
 
@@ -75,12 +66,7 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 	}
 	public T readOrNull(String key) {  
 		T result;
-		if (cache!=null)
-			result=cache.get(key);
-		else {	
-			Struct rec = storage.read(key);
-			result = createObject(rec);
-		}
+		result=objects.get(key);
 		//System.out.println("struct "+rec.getClass()+"="+rec);
 		//System.out.println("object "+obj.getClass()+"="+obj);
 		return result;
@@ -123,10 +109,10 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 	}
 
 	
-	public static class KeyRef<TT extends PkoObject> {
-		public final PkoTable<TT> table;
+	public static class KeyRef<MT extends PkoModel, TT extends PkoObject<MT>> {
+		public final PkoTable<MT, TT> table;
 		public final String _id;
-		protected KeyRef(PkoTable<TT> table, String _id) { 
+		protected KeyRef(PkoTable<MT, TT> table, String _id) { 
 			this.table=table; 
 			this._id=_id; 
 		}
@@ -140,7 +126,7 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 				return true;
 			if (! (obj instanceof KeyRef))
 				return false;
-			KeyRef<?> ref=(KeyRef<?>) obj;
+			KeyRef<?,?> ref=(KeyRef<?, ?>) obj;
 			if (this.table!=ref.table)
 				return false;
 			return this._id.equals(ref._id);
@@ -149,7 +135,7 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 	}
 
 	
-	public KeyRef<T> createRef(String key) { return new KeyRef<T>(this,key); }
+	public KeyRef<MT, T> createRef(String key) { return new KeyRef<MT, T>(this,key); }
 
 	private void checkSameId(T oldValue, T newValue) {
 		if (! alwaysCheckId)
@@ -162,9 +148,7 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 		}
 	}
 	public TypedSequence<T> findAll() {
-		if (cache!=null)  
-			return ImmutableSequence.smartCopy(model, schema.getJavaClass(),cache.getAll());
-		return ImmutableSequence.realCopy(model, schema.getJavaClass(),storage.findAll());
+		return ImmutableSequence.smartCopy(model, schema.getJavaClass(),objects.getAll());
 	}
 
 
@@ -184,10 +168,10 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 			return "Change("+oldId+","+newId+")"; 
 		} 
 	}
-	public interface ChangeHandler<TT extends PkoObject> {
-		public boolean allow(PkoTable<TT>.Change change); 
-		public void commit(PkoTable<TT>.Change change); 
-		public void rollback(PkoTable<TT>.Change change); 
+	public interface ChangeHandler<MT extends PkoModel, TT extends PkoObject<MT>> {
+		public boolean allow(PkoTable<MT, TT>.Change change); 
+		public void commit(PkoTable<MT, TT>.Change change); 
+		public void rollback(PkoTable<MT, TT>.Change change); 
 	}
 
 	private final static Logger changeLogger = LoggerFactory.getLogger(PkoTable.Change.class);
@@ -201,7 +185,7 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 
 	private boolean allow(Change change) {
 		changeLogger.debug("asking to allow {}",change);
-		for (ChangeHandler<T> res : indices) {
+		for (ChangeHandler<MT, T> res : indices) {
 			try { 
 				changeLogger.debug("asking {}",res);
 				if (! res.allow(change)) {
@@ -221,7 +205,7 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 	private boolean commmit(Change change) {
 		changeLogger.debug("commiting {}",change);
 		for (int index=0; index<indices.length; index++) {
-			ChangeHandler<T> res = indices[index];
+			ChangeHandler<MT, T> res = indices[index];
 			changeLogger.debug("commiting in {}",res);
 			try { res.commit(change); } 
 			catch(RuntimeException e) { 

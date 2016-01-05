@@ -17,17 +17,14 @@ import com.mongodb.DBObject;
 public class MongoStorage implements StructStorage {
 
 	private final DBCollection collection;
-	private final PkoSchema<?> schema;
-	private final boolean useCache;
+	private final PkoSchema<?,?> schema;
 	private final MongoDb db;
 	
-	public MongoStorage(PkoSchema<?> schema, Props props, MongoDb db) {
+	public MongoStorage(PkoSchema<?,?> schema, Props props, MongoDb db) {
 		this.schema=schema;
 		this.db=db;
 		this.collection=db.getCollection(schema.getJavaClass().getSimpleName());
-		this.useCache=props.getBoolean("useCache",false);
 	}
-	@Override public boolean useCache() { return this.useCache; }
 
 	@Override public void close() { db.closeMongoDB(); }
 	@Override public Class<?> getRecordClass() { return schema.getJavaClass(); }

@@ -15,7 +15,6 @@ import org.kisst.item4j.seq.TypedSequence;
 import org.kisst.item4j.struct.MultiStruct;
 import org.kisst.item4j.struct.SingleItemStruct;
 import org.kisst.item4j.struct.Struct;
-import org.kisst.pko4j.PkoObject;
 import org.kisst.pko4j.StructStorage;
 import org.kisst.props4j.Props;
 import org.kisst.util.CallInfo;
@@ -24,7 +23,6 @@ import org.kisst.util.FileUtil;
 public class FileStorage implements StructStorage {
 	private final File dir;
 	private final String name;
-	private final boolean useCache;
 	private final JsonParser parser=new JsonParser();
 	private final JsonOutputter outputter = new JsonOutputter(null);
 	private final Class<?> cls;
@@ -32,9 +30,8 @@ public class FileStorage implements StructStorage {
 	//private final Repository gitrepo;
 
 
-	public FileStorage(Class<? extends PkoObject> cls, Git git, File maindir, boolean useCache) {
+	public FileStorage(Class<?> cls, Git git, File maindir) {
 		this.cls=cls;
-		this.useCache=useCache;
 		this.name=cls.getSimpleName();
 		dir=new File(maindir,name);
 		if (! dir.exists())
@@ -42,13 +39,11 @@ public class FileStorage implements StructStorage {
 		//loadAllRecords();
 		this.git=git;
 	}
-	public FileStorage(Class<? extends PkoObject> cls, Props props, Git git) {
-		this(cls, git, new File(props.getString("datadir", "data")),props.getBoolean("useCache",true)); 
+	public FileStorage(Class<?> cls, Props props, Git git) {
+		this(cls, git, new File(props.getString("datadir", "data"))); 
 	}
 	@Override public Class<?> getRecordClass() { return cls; }
 	private String getKey(Struct record) { return Item.asString(record.getDirectFieldValue("_id")); }
-
-	@Override public boolean useCache() { return useCache;}
 
 	@Override public String create(Struct value) {
 		String key = getKey(value);

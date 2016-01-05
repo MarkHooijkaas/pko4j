@@ -4,10 +4,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.kisst.item4j.ImmutableSequence;
 import org.kisst.item4j.Schema;
+import org.kisst.pko4j.PkoModel;
 import org.kisst.pko4j.PkoObject;
 import org.kisst.pko4j.PkoModel.UniqueIndex;
 
-public class MemoryUniqueIndex<T extends PkoObject> extends AbstractKeyedIndex<T>  implements UniqueIndex<T> {
+public class MemoryUniqueIndex<MT extends PkoModel, T extends PkoObject<MT>> extends AbstractKeyedIndex<MT, T>  implements UniqueIndex<T> {
 	private final FieldList fields;
 	private final boolean ignoreCase;
 	private final ConcurrentHashMap<String, T> map = new ConcurrentHashMap<String, T>();

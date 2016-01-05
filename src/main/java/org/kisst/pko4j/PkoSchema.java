@@ -8,7 +8,7 @@ import org.kisst.item4j.Type;
 import org.kisst.item4j.struct.Struct;
 import org.kisst.util.ReflectionUtil;
 
-public class PkoSchema<T extends PkoObject> extends ReflectSchema<T> {
+public class PkoSchema<MT extends PkoModel, T extends PkoObject<MT>> extends ReflectSchema<T> {
 	public PkoSchema(Class<T> cls) { 
 		super(cls); 
 	}

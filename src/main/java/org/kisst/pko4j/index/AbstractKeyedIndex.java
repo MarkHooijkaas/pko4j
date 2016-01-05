@@ -1,12 +1,13 @@
 package org.kisst.pko4j.index;
 
 import org.kisst.item4j.Schema;
+import org.kisst.pko4j.PkoModel;
 import org.kisst.pko4j.PkoObject;
 import org.kisst.pko4j.PkoTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractKeyedIndex<T extends PkoObject> extends Index<T> {
+public abstract class AbstractKeyedIndex<MT extends PkoModel, T extends PkoObject<MT>> extends Index<MT, T> {
 	public final static Logger logger = LoggerFactory.getLogger(AbstractKeyedIndex.class);
 
 	public AbstractKeyedIndex(Schema schema) { 
@@ -18,7 +19,7 @@ public abstract class AbstractKeyedIndex<T extends PkoObject> extends Index<T> {
 	abstract boolean keyExists(String key);
 
 
-	@Override public boolean allow(PkoTable<T>.Change change) {
+	@Override public boolean allow(PkoTable<MT, T>.Change change) {
 		if (change.oldRecord==null) // create
 			return ! keyExists(calcUniqueKey(change.newRecord));
 		else if (change.newRecord==null) {// delete
@@ -44,7 +45,7 @@ public abstract class AbstractKeyedIndex<T extends PkoObject> extends Index<T> {
 	}
 	
 
-	@Override public void commit(PkoTable<T>.Change change) {
+	@Override public void commit(PkoTable<MT, T>.Change change) {
 		logger.debug("committing {}",change);
 		// TODO: should we check the prepare again??
 		if (change.oldRecord!=null) {
@@ -59,7 +60,7 @@ public abstract class AbstractKeyedIndex<T extends PkoObject> extends Index<T> {
 		}
 	}
 
-	@Override public void rollback(PkoTable<T>.Change change) {
+	@Override public void rollback(PkoTable<MT, T>.Change change) {
 		if (change.newRecord!=null) {
 			String newkey = calcUniqueKey(change.newRecord);
 			logger.info("rollback of adding unique key {}",newkey);

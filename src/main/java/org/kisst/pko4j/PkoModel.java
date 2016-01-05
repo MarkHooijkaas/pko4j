@@ -22,11 +22,11 @@ public abstract class PkoModel implements Item.Factory {
 	}
 
 	public void initModel() {
-		for (PkoTable<?> table: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
+		for (PkoTable<?,?> table: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
 			table.initcache();
 	}
 	public void close() {
-		for (PkoTable<?> table : ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
+		for (PkoTable<?,?> table : ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
 			table.close();
 	}
 
@@ -38,21 +38,21 @@ public abstract class PkoModel implements Item.Factory {
 		throw new RuntimeException("Unknown Storage for type "+cls.getSimpleName());
 	}
 	@SuppressWarnings("unchecked")
-	public<T extends PkoObject> ChangeHandler<T>[] getIndices(Class<?> cls) {
-		ArrayList<ChangeHandler<T>> result=new ArrayList<ChangeHandler<T>>();
+	public<MT extends PkoModel, T extends PkoObject<MT>> ChangeHandler<MT, T>[] getIndices(Class<?> cls) {
+		ArrayList<ChangeHandler<MT,T>> result=new ArrayList<ChangeHandler<MT,T>>();
 		for (StorageOption opt: options) {
 			if (opt instanceof Index && opt.getRecordClass()==cls) {
-				result.add((ChangeHandler<T>) opt);
+				result.add((ChangeHandler<MT,T>) opt);
 				//System.out.println("Using index "+opt);
 			}
 		}
-		ChangeHandler<T>[] arr=new ChangeHandler[result.size()];
+		ChangeHandler<MT,T>[] arr=new ChangeHandler[result.size()];
 		for (int i=0; i<result.size(); i++)
 			arr[i]=result.get(i);
 		return arr;
 	}
 	
-	public <T extends PkoObject> UniqueIndex<T> getUniqueIndex(Class<?> cls, Schema.Field<?> ... fields) {
+	public <T extends PkoObject<?>> UniqueIndex<T> getUniqueIndex(Class<?> cls, Schema.Field<?> ... fields) {
 		for (StorageOption opt: options) {
 			if (opt instanceof UniqueIndex && opt.getRecordClass()==cls) {
 				@SuppressWarnings("unchecked")
@@ -67,7 +67,7 @@ public abstract class PkoModel implements Item.Factory {
 		throw new RuntimeException("Unknown UniqueIndex for type "+cls.getSimpleName()+" and field(s) "+fieldnames);
 	}
 
-	public <T extends PkoObject> OrderedIndex<T> getOrderedIndex(Class<T> cls, Schema.Field<?> ... fields) {
+	public <T extends PkoObject<?>> OrderedIndex<T> getOrderedIndex(Class<T> cls, Schema.Field<?> ... fields) {
 		for (StorageOption opt: options) {
 			if (opt instanceof OrderedIndex && opt.getRecordClass()==cls) {
 				@SuppressWarnings("unchecked")
@@ -96,14 +96,14 @@ public abstract class PkoModel implements Item.Factory {
 		return basicFactory.construct(cls, data);
 	}
 
-	public interface Index<T extends PkoObject> {
+	public interface Index<T extends PkoObject<?>> {
 		public Class<T> getRecordClass(); 
 	}
-	public interface UniqueIndex<T extends PkoObject> extends Index<T >{
+	public interface UniqueIndex<T extends PkoObject<?>> extends Index<T >{
 		public Schema.Field<?>[] fields();
 		public T get(String ... field); 
 	}
-	public interface OrderedIndex<T extends PkoObject> extends Index<T >, Iterable<T>{
+	public interface OrderedIndex<T extends PkoObject<?>> extends Index<T >, Iterable<T>{
 		public Schema.Field<?>[] fields();
 		public Iterable<T> tailList(String fromKey); 
 		public Iterable<T> headList(String toKey);  
