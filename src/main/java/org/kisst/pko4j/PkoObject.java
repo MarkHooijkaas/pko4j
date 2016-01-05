@@ -10,6 +10,7 @@ import org.kisst.pko4j.PkoTable.KeyRef;
 public abstract class PkoObject extends SchemaObject {
 	public final PkoTable<?> table;
 	public final int _pkoVersion;
+	public final int _crudObjectVersion; //for backward compatibility
 	public final String _id;
 	public final Instant creationDate;
 	public final Instant modificationDate;
@@ -17,6 +18,7 @@ public abstract class PkoObject extends SchemaObject {
 		super(table.schema);
 		this.table=table;
 		this._pkoVersion=getPkoVersionOf(data);
+		this._crudObjectVersion=_pkoVersion;
 		this._id=createUniqueKey(data);
 		this.creationDate=new ObjectId(_id).getDate().toInstant();
 		this.modificationDate=(Instant) data.getDirectFieldValue("savedModificationDate", Instant.now());
@@ -38,7 +40,7 @@ public abstract class PkoObject extends SchemaObject {
 	public int getPkoVersionOf(Struct data) { 
 		Object version = data.getDirectFieldValue("_crudObjectVersion", "0");
 		if ("UNKNOWN_FIELD".equals(version))
-			return 0;
+			return getPkoVersion();
 		return Integer.parseInt(""+version);
 	}
 
