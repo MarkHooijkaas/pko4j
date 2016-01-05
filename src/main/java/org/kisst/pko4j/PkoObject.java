@@ -4,6 +4,9 @@ import java.time.Instant;
 
 import org.bson.types.ObjectId;
 import org.kisst.item4j.Item;
+import org.kisst.item4j.Schema;
+import org.kisst.item4j.struct.MultiStruct;
+import org.kisst.item4j.struct.SingleItemStruct;
 import org.kisst.item4j.struct.Struct;
 import org.kisst.pko4j.PkoTable.KeyRef;
 
@@ -46,6 +49,14 @@ public abstract class PkoObject<MT extends PkoModel> extends SchemaObject {
 		return Integer.parseInt(""+version);
 	}
 
+	public PkoObject<MT> changeField(Schema.Field<?> field, Object value) {
+		return model.construct(table.getElementClass(), new MultiStruct(this, 
+				new SingleItemStruct(field.getName(), value)
+		));
+	}
+
+	
+	
 	public String readBlob(String path) { return table.storage.readBlob(_id, path); }
 	public void writeBlob(String path, String blob) { table.storage.writeBlob(_id, path, blob); }
 	public void appendBlob(String path, String blob) { table.storage.appendBlob(_id, path, blob); }

@@ -31,7 +31,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT>> implements T
 		this.schema=schema;
 		this.name=schema.getJavaClass().getSimpleName();
 		this.storage=model.getStorage(schema.getJavaClass());
-		objects=new MemoryUniqueIndex<MT, T>(schema, false, new PkoSchema.IdField());
+		this.objects=new MemoryUniqueIndex<MT, T>(schema, false, new PkoSchema.IdField());
 		this.indices=(ChangeHandler<MT, T>[]) ArrayUtil.join(objects,model.getIndices(schema.getJavaClass()));
 	}
 	// This can not be done in the constructor, because then the KeyObjects will have a null table
