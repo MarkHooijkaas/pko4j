@@ -35,7 +35,12 @@ public abstract class PkoObject extends SchemaObject {
 	public<T extends PkoObject> KeyRef<T> getRef() { return (KeyRef<T>) table.createRef(_id);}
 	
 	public int getPkoVersion() { return 0;}
-	public int getPkoVersionOf(Struct data) { return Integer.parseInt(""+data.getDirectFieldValue("_crudObjectVersion", "0"));}
+	public int getPkoVersionOf(Struct data) { 
+		Object version = data.getDirectFieldValue("_crudObjectVersion", "0");
+		if ("UNKNOWN_FIELD".equals(version))
+			return 0;
+		return Integer.parseInt(""+version);
+	}
 
 	public String readBlob(String path) { return table.storage.readBlob(_id, path); }
 	public void writeBlob(String path, String blob) { table.storage.writeBlob(_id, path, blob); }
