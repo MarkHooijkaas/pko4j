@@ -14,7 +14,7 @@ import org.kisst.util.ArrayUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PkoTable<MT extends PkoModel, T extends PkoObject<MT>> implements TypedSequence<T> {
+public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implements TypedSequence<T> {
 	public static final Logger logger = LoggerFactory.getLogger(PkoTable.class);
 	
 	public final PkoModel model;
@@ -109,7 +109,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT>> implements T
 	}
 
 	
-	public static class KeyRef<MT extends PkoModel, TT extends PkoObject<MT>> {
+	public static class KeyRef<MT extends PkoModel, TT extends PkoObject<MT,TT>> {
 		public final PkoTable<MT, TT> table;
 		public final String _id;
 		protected KeyRef(PkoTable<MT, TT> table, String _id) { 
@@ -168,7 +168,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT>> implements T
 			return "Change("+oldId+","+newId+")"; 
 		} 
 	}
-	public interface ChangeHandler<MT extends PkoModel, TT extends PkoObject<MT>> {
+	public interface ChangeHandler<MT extends PkoModel, TT extends PkoObject<MT,TT>> {
 		public boolean allow(PkoTable<MT, TT>.Change change); 
 		public void commit(PkoTable<MT, TT>.Change change); 
 		public void rollback(PkoTable<MT, TT>.Change change); 

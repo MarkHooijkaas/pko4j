@@ -8,7 +8,7 @@ import org.kisst.pko4j.PkoModel;
 import org.kisst.pko4j.PkoObject;
 import org.kisst.pko4j.PkoModel.UniqueIndex;
 
-public class MemoryUniqueIndex<MT extends PkoModel, T extends PkoObject<MT>> extends AbstractKeyedIndex<MT, T>  implements UniqueIndex<T> {
+public class MemoryUniqueIndex<MT extends PkoModel, T extends PkoObject<MT,T>> extends AbstractKeyedIndex<MT, T>  implements UniqueIndex<T> {
 	private final FieldList fields;
 	private final boolean ignoreCase;
 	private final ConcurrentHashMap<String, T> map = new ConcurrentHashMap<String, T>();

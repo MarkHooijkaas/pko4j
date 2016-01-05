@@ -6,7 +6,7 @@ import org.kisst.pko4j.PkoObject;
 import org.kisst.pko4j.StorageOption;
 import org.kisst.pko4j.PkoTable.ChangeHandler;
 
-public abstract class Index<MT extends PkoModel, T extends PkoObject<MT>> implements StorageOption, ChangeHandler<MT, T> {
+public abstract class Index<MT extends PkoModel, T extends PkoObject<MT,T>> implements StorageOption, ChangeHandler<MT, T> {
 	public final Schema schema;
 	protected Index(Schema schema) { this.schema=schema;	}
 	

@@ -10,7 +10,7 @@ import org.kisst.pko4j.PkoObject;
 import org.kisst.pko4j.PkoSchema;
 import org.kisst.pko4j.PkoModel.OrderedIndex;
 
-public class MemoryOrderedIndex<MT extends PkoModel, T extends PkoObject<MT>> extends AbstractKeyedIndex<MT, T> implements OrderedIndex<T> {
+public class MemoryOrderedIndex<MT extends PkoModel, T extends PkoObject<MT,T>> extends AbstractKeyedIndex<MT, T> implements OrderedIndex<T> {
 	private final ConcurrentSkipListMap<String, T> map=new ConcurrentSkipListMap<String,T>();
 	private final boolean ignoreCase;
 	private final FieldList fields;

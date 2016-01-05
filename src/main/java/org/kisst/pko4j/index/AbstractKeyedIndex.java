@@ -7,7 +7,7 @@ import org.kisst.pko4j.PkoTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractKeyedIndex<MT extends PkoModel, T extends PkoObject<MT>> extends Index<MT, T> {
+public abstract class AbstractKeyedIndex<MT extends PkoModel, T extends PkoObject<MT,T>> extends Index<MT, T> {
 	public final static Logger logger = LoggerFactory.getLogger(AbstractKeyedIndex.class);
 
 	public AbstractKeyedIndex(Schema schema) { 

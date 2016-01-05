@@ -10,7 +10,7 @@ import org.kisst.item4j.struct.SingleItemStruct;
 import org.kisst.item4j.struct.Struct;
 import org.kisst.pko4j.PkoTable.KeyRef;
 
-public abstract class PkoObject<MT extends PkoModel> extends SchemaObject {
+public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>> extends SchemaObject {
 	public final MT model;
 	public final PkoTable<MT, ?> table;
 	public final int _pkoVersion;
@@ -18,7 +18,7 @@ public abstract class PkoObject<MT extends PkoModel> extends SchemaObject {
 	public final String _id;
 	public final Instant creationDate;
 	public final Instant modificationDate;
-	public <T extends PkoObject<MT>> PkoObject(MT model, PkoTable<MT,T> table, Struct data) {
+	public  PkoObject(MT model, PkoTable<MT,OT> table, Struct data) {
 		super(table.schema);
 		this.model=model;
 		this.table=table;
@@ -39,7 +39,7 @@ public abstract class PkoObject<MT extends PkoModel> extends SchemaObject {
 	protected String uniqueKey() { return new ObjectId().toHexString();}
 
 	@SuppressWarnings("unchecked")
-	public<T extends PkoObject<MT>> KeyRef<MT, T> getRef() { return (KeyRef<MT, T>) table.createRef(_id);}
+	public<T extends PkoObject<MT,OT>> KeyRef<MT, OT> getRef() { return (KeyRef<MT, OT>) table.createRef(_id);}
 	
 	public int getPkoVersion() { return 0;}
 	public int getPkoVersionOf(Struct data) { 
@@ -49,7 +49,7 @@ public abstract class PkoObject<MT extends PkoModel> extends SchemaObject {
 		return Integer.parseInt(""+version);
 	}
 
-	public PkoObject<MT> changeField(Schema.Field<?> field, Object value) {
+	public OT changeField(Schema.Field<?> field, Object value) {
 		return model.construct(table.getElementClass(), new MultiStruct(this, 
 				new SingleItemStruct(field.getName(), value)
 		));
