@@ -50,8 +50,10 @@ public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>
 	}
 
 	public OT changeField(Schema.Field<?> field, Object value) {
-		return model.construct(table.getElementClass(), new MultiStruct(this, 
-				new SingleItemStruct(field.getName(), value)
+		//System.out.println("Changing "+field+" to "+value);
+		return model.construct(table.getElementClass(), new MultiStruct( 
+			new SingleItemStruct(field.getName(), value),
+			this
 		));
 	}
 

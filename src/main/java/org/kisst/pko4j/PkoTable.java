@@ -71,7 +71,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 		//System.out.println("object "+obj.getClass()+"="+obj);
 		return result;
 	}
-	private synchronized void update(T oldValue, T newValue) {
+	public synchronized void update(T oldValue, T newValue) {
 		checkSameId(oldValue, newValue);
 		if (executeChange(new Change(oldValue,newValue)))
 			storage.update(oldValue, newValue); 
