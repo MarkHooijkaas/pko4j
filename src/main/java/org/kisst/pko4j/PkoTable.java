@@ -37,14 +37,24 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 		this.indices=(ChangeHandler<MT, T>[]) ArrayUtil.join(objects,model.getIndices(schema.getJavaClass()));
 	}
 	// This can not be done in the constructor, because then the KeyObjects will have a null table
-	public void initcache() { 
+
+	public void createRefs() { 
+		TypedSequence<Struct> seq = storage.findAll();
+		for (Struct rec:seq) {
+			try {
+				T obj=createObject(rec);
+				refs.put(obj._id, obj.createRef());
+			}
+			catch (RuntimeException e) { e.printStackTrace(); /*ignore*/ } // TODO: return dummy activity
+		}
+	}
+	public void loadFromStorage() { 
 		//System.out.println("Loading all "+name+" records to cache");
 		TypedSequence<Struct> seq = storage.findAll();
 		for (Struct rec:seq) {
 			try {
 				T obj=createObject(rec);
-				if (executeChange(new Change(null,obj)))
-					refs.put(obj._id, obj.createRef());
+				executeChange(new Change(null,obj));
 			}
 			catch (RuntimeException e) { e.printStackTrace(); /*ignore*/ } // TODO: return dummy activity
 		}

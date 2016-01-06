@@ -21,7 +21,10 @@ public abstract class PkoModel implements Item.Factory {
 
 	public void initModel() {
 		for (PkoTable<?,?> table: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
-			table.initcache();
+			table.createRefs();
+		// Dirty hack: do it second time, so that al refs are loaded 
+		for (PkoTable<?,?> table: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
+			table.loadFromStorage();
 	}
 	public void close() {
 		for (PkoTable<?,?> table : ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
