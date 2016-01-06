@@ -1,6 +1,7 @@
 package org.kisst.pko4j;
 
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.kisst.item4j.ImmutableSequence;
 import org.kisst.item4j.Schema.Field;
@@ -23,6 +24,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 	final StructStorage storage;
 	private final UniqueIndex<MT, T> objects;
 	private final ChangeHandler<MT, T>[] indices;
+	private final ConcurrentHashMap<String, KeyRef<MT,T>> refs = new ConcurrentHashMap<>();
 
 	private boolean alwaysCheckId=true;
 	@SuppressWarnings("unchecked")
@@ -41,7 +43,8 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 		for (Struct rec:seq) {
 			try {
 				T obj=createObject(rec);
-				executeChange(new Change(null,obj));
+				if (executeChange(new Change(null,obj)))
+					refs.put(obj._id, obj.createRef());
 			}
 			catch (RuntimeException e) { e.printStackTrace(); /*ignore*/ } // TODO: return dummy activity
 		}
@@ -50,12 +53,15 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 	public PkoSchema<MT, T> getSchema() { return schema; }
 	public String getName() { return name; }
 	public String getKey(T obj) { return obj._id; }
+	public KeyRef<MT, T> createRef(String key) { return (KeyRef<MT, T>) refs.get(key); }
 
 	public T createObject(Struct doc) { return schema.createObject(model, doc); }
 
 	public synchronized void create(T newValue) {
-		if (executeChange(new Change(null,newValue)))
+		if (executeChange(new Change(null,newValue))) {
+			refs.put(newValue._id, newValue.createRef());
 			storage.create(newValue);
+		}
 	}
 
 	public T read(String key) {
@@ -104,11 +110,12 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 	
 	
 	public synchronized void delete(T oldValue) {
-		if (executeChange(new Change(oldValue,null)))
+		if (executeChange(new Change(oldValue,null))) {
+			refs.remove(oldValue._id);
 			storage.delete(oldValue);
+		}
 	}
 
-	
 	public static class KeyRef<MT extends PkoModel, TT extends PkoObject<MT,TT>> {
 		public final PkoTable<MT, TT> table;
 		public final String _id;
@@ -133,9 +140,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 		}
 		@Override public int hashCode() { return (_id+table).hashCode(); }
 	}
-
 	
-	public KeyRef<MT, T> createRef(String key) { return new KeyRef<MT, T>(this,key); }
 
 	private void checkSameId(T oldValue, T newValue) {
 		if (! alwaysCheckId)

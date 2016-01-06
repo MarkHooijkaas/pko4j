@@ -4,7 +4,6 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 
 import org.kisst.item4j.Item;
-import org.kisst.item4j.Schema;
 import org.kisst.item4j.struct.Struct;
 import org.kisst.pko4j.PkoTable.ChangeHandler;
 import org.kisst.util.ReflectionUtil;

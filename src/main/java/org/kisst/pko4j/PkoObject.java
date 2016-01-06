@@ -28,6 +28,9 @@ public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>
 		//System.out.println(data);
 	}
 	public String getKey() { return _id;} 
+	protected KeyRef<MT,OT> createRef() { return new KeyRef<MT,OT>(table, _id); }
+	public KeyRef<MT,OT> getRef() { return table.createRef(_id);} 
+	//public<T extends PkoObject<MT,OT>> KeyRef<MT, OT> getRef() { return (KeyRef<MT, OT>) table.createRef(_id);}
 	protected String createUniqueKey(Struct data) {
 		String key= Item.asString(data.getDirectFieldValue("_id",null)); 
 		if (key==null)
@@ -36,7 +39,6 @@ public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>
 	}
 	protected String uniqueKey() { return new ObjectId().toHexString();}
 
-	public<T extends PkoObject<MT,OT>> KeyRef<MT, OT> getRef() { return (KeyRef<MT, OT>) table.createRef(_id);}
 	
 	public int getPkoVersion() { return 0;}
 	public int getPkoVersionOf(Struct data) { 
@@ -53,7 +55,7 @@ public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>
 			this
 		));
 	}
-	
+
 	public String readBlob(String path) { return table.storage.readBlob(_id, path); }
 	public void writeBlob(String path, String blob) { table.storage.writeBlob(_id, path, blob); }
 	public void appendBlob(String path, String blob) { table.storage.appendBlob(_id, path, blob); }
