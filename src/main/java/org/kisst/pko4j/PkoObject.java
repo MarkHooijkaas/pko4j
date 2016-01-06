@@ -29,7 +29,7 @@ public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>
 	}
 	public String getKey() { return _id;} 
 	protected KeyRef<MT,OT> createRef() { return new KeyRef<MT,OT>(table, _id); }
-	public KeyRef<MT,OT> getRef() { return table.createRef(_id);} 
+	public KeyRef<MT,OT> getRef() { return table.findRef(_id);} 
 	//public<T extends PkoObject<MT,OT>> KeyRef<MT, OT> getRef() { return (KeyRef<MT, OT>) table.createRef(_id);}
 	protected String createUniqueKey(Struct data) {
 		String key= Item.asString(data.getDirectFieldValue("_id",null)); 

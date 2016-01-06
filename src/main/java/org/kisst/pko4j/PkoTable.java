@@ -53,7 +53,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 	public PkoSchema<MT, T> getSchema() { return schema; }
 	public String getName() { return name; }
 	public String getKey(T obj) { return obj._id; }
-	public KeyRef<MT, T> createRef(String key) { return (KeyRef<MT, T>) refs.get(key); }
+	public KeyRef<MT, T> findRef(String key) { return (KeyRef<MT, T>) refs.get(key); }
 
 	public T createObject(Struct doc) { return schema.createObject(model, doc); }
 
