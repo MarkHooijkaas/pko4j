@@ -12,7 +12,7 @@ import org.kisst.pko4j.PkoTable.KeyRef;
 
 public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>> extends SchemaObject {
 	public final MT model;
-	public final PkoTable<MT, ?> table;
+	public final PkoTable<MT, OT> table;
 	public final int _pkoVersion;
 	public final int _crudObjectVersion; //for backward compatibility
 	public final String _id;
@@ -38,7 +38,6 @@ public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>
 	}
 	protected String uniqueKey() { return new ObjectId().toHexString();}
 
-	@SuppressWarnings("unchecked")
 	public<T extends PkoObject<MT,OT>> KeyRef<MT, OT> getRef() { return (KeyRef<MT, OT>) table.createRef(_id);}
 	
 	public int getPkoVersion() { return 0;}

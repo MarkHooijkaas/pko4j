@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implements TypedSequence<T> {
 	public static final Logger logger = LoggerFactory.getLogger(PkoTable.class);
 	
-	public final PkoModel model;
+	public final MT model;
 	public final PkoSchema<MT, T> schema;
 	private final String name;
 	final StructStorage storage;
@@ -26,7 +26,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 
 	private boolean alwaysCheckId=true;
 	@SuppressWarnings("unchecked")
-	public PkoTable(PkoModel model, PkoSchema<MT, T> schema) { 
+	public PkoTable(MT model, PkoSchema<MT, T> schema) { 
 		this.model=model;
 		this.schema=schema;
 		this.name=schema.getJavaClass().getSimpleName();
