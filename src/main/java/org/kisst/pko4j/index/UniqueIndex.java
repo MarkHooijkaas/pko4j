@@ -6,15 +6,15 @@ import org.kisst.item4j.ImmutableSequence;
 import org.kisst.item4j.Schema;
 import org.kisst.pko4j.PkoModel;
 import org.kisst.pko4j.PkoObject;
-import org.kisst.pko4j.PkoModel.UniqueIndex;
+import org.kisst.pko4j.PkoModel.Index;
 
-public class MemoryUniqueIndex<MT extends PkoModel, T extends PkoObject<MT,T>> extends AbstractKeyedIndex<MT, T>  implements UniqueIndex<T> {
+public class UniqueIndex<MT extends PkoModel, T extends PkoObject<MT,T>> extends AbstractKeyedIndex<MT, T> implements Index<T> {
 	private final FieldList fields;
 	private final boolean ignoreCase;
 	private final ConcurrentHashMap<String, T> map = new ConcurrentHashMap<String, T>();
 	
 	@SafeVarargs
-	public MemoryUniqueIndex(Schema schema, boolean ignoreCase, Schema.Field<?> ... fields) { 
+	public UniqueIndex(Schema schema, boolean ignoreCase, Schema.Field<?> ... fields) { 
 		super(schema);
 		this.ignoreCase=ignoreCase;
 		this.fields=new FieldList(fields);
@@ -31,9 +31,7 @@ public class MemoryUniqueIndex<MT extends PkoModel, T extends PkoObject<MT,T>> e
 		return ImmutableSequence.smartCopy(null/*schema.model*/, schema.getJavaClass(), map.values());
 	}
 
-
-	@Override public T get(String ... values) { return map.get(changeCase(fields.getKey(values))); }
-
-	@Override public Schema.Field<?>[] fields() { return fields.fields(); }
+	public T get(String ... values) { return map.get(changeCase(fields.getKey(values))); }
+	public Schema.Field<?>[] fields() { return fields.fields(); }
 
 }

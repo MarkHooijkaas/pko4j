@@ -70,14 +70,4 @@ public abstract class PkoModel implements Item.Factory {
 	public interface Index<T extends PkoObject<?,?>> {
 		public Class<T> getRecordClass(); 
 	}
-	public interface UniqueIndex<T extends PkoObject<?,?>> extends Index<T >{
-		public Schema.Field<?>[] fields();
-		public T get(String ... field); 
-	}
-	public interface OrderedIndex<T extends PkoObject<?,?>> extends Index<T >, Iterable<T>{
-		public Schema.Field<?>[] fields();
-		public Iterable<T> tailList(String fromKey); 
-		public Iterable<T> headList(String toKey);  
-		public Iterable<T> subList(String fromKey,String toKey); 
-	}
 }

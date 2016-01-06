@@ -8,14 +8,14 @@ import org.kisst.item4j.Schema;
 import org.kisst.pko4j.PkoModel;
 import org.kisst.pko4j.PkoObject;
 import org.kisst.pko4j.PkoSchema;
-import org.kisst.pko4j.PkoModel.OrderedIndex;
+import org.kisst.pko4j.PkoModel.Index;
 
-public class MemoryOrderedIndex<MT extends PkoModel, T extends PkoObject<MT,T>> extends AbstractKeyedIndex<MT, T> implements OrderedIndex<T> {
+public class OrderedIndex<MT extends PkoModel, T extends PkoObject<MT,T>> extends AbstractKeyedIndex<MT, T> implements Index<T>, Iterable<T> {
 	private final ConcurrentSkipListMap<String, T> map=new ConcurrentSkipListMap<String,T>();
 	private final boolean ignoreCase;
 	private final FieldList fields;
 
-	public MemoryOrderedIndex(PkoSchema<MT, T> schema, boolean ignoreCase, Schema.Field<?> ... fields) { 
+	public OrderedIndex(PkoSchema<MT, T> schema, boolean ignoreCase, Schema.Field<?> ... fields) { 
 		super(schema);
 		this.ignoreCase=ignoreCase;
 		this.fields=new FieldList(fields);
@@ -28,11 +28,11 @@ public class MemoryOrderedIndex<MT extends PkoModel, T extends PkoObject<MT,T>> 
 	@Override protected void remove(String key) { map.remove(key); }
 	@Override public boolean keyExists(String key) { return map.containsKey(key); }
 
-	@Override public Schema.Field<?>[] fields() { return fields.fields(); }
+	public Schema.Field<?>[] fields() { return fields.fields(); }
 	
 	@Override public Iterator<T> iterator() { return map.values().iterator(); }
 
-	@Override public Collection<T> tailList(String fromKey) { return map.tailMap(fromKey).values(); } 
-	@Override public Collection<T> headList(String toKey) { return map.headMap(toKey).values(); } 
-	@Override public Collection<T> subList(String fromKey,String toKey) { return map.subMap(fromKey, toKey).values(); } 
+	public Collection<T> tailList(String fromKey) { return map.tailMap(fromKey).values(); } 
+	public Collection<T> headList(String toKey) { return map.headMap(toKey).values(); } 
+	public Collection<T> subList(String fromKey,String toKey) { return map.subMap(fromKey, toKey).values(); } 
 }

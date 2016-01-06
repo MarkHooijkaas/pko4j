@@ -9,7 +9,7 @@ import org.kisst.item4j.seq.TypedSequence;
 import org.kisst.item4j.struct.MultiStruct;
 import org.kisst.item4j.struct.SingleItemStruct;
 import org.kisst.item4j.struct.Struct;
-import org.kisst.pko4j.index.MemoryUniqueIndex;
+import org.kisst.pko4j.index.UniqueIndex;
 import org.kisst.util.ArrayUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 	public final PkoSchema<MT, T> schema;
 	private final String name;
 	final StructStorage storage;
-	private final MemoryUniqueIndex<MT, T> objects;
+	private final UniqueIndex<MT, T> objects;
 	private final ChangeHandler<MT, T>[] indices;
 
 	private boolean alwaysCheckId=true;
@@ -31,7 +31,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 		this.schema=schema;
 		this.name=schema.getJavaClass().getSimpleName();
 		this.storage=model.getStorage(schema.getJavaClass());
-		this.objects=new MemoryUniqueIndex<MT, T>(schema, false, new PkoSchema.IdField());
+		this.objects=new UniqueIndex<MT, T>(schema, false, new PkoSchema.IdField());
 		this.indices=(ChangeHandler<MT, T>[]) ArrayUtil.join(objects,model.getIndices(schema.getJavaClass()));
 	}
 	// This can not be done in the constructor, because then the KeyObjects will have a null table
