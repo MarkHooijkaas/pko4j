@@ -3,8 +3,8 @@ package org.kisst.pko4j;
 import java.time.Instant;
 
 import org.bson.types.ObjectId;
+import org.kisst.item4j.HasName;
 import org.kisst.item4j.Item;
-import org.kisst.item4j.Schema;
 import org.kisst.item4j.struct.MultiStruct;
 import org.kisst.item4j.struct.SingleItemStruct;
 import org.kisst.item4j.struct.Struct;
@@ -49,15 +49,13 @@ public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>
 		return Integer.parseInt(""+version);
 	}
 
-	public OT changeField(Schema.Field<?> field, Object value) {
+	public OT changeField(HasName field, Object value) {
 		//System.out.println("Changing "+field+" to "+value);
 		return model.construct(table.getElementClass(), new MultiStruct( 
 			new SingleItemStruct(field.getName(), value),
 			this
 		));
 	}
-
-	
 	
 	public String readBlob(String path) { return table.storage.readBlob(_id, path); }
 	public void writeBlob(String path, String blob) { table.storage.writeBlob(_id, path, blob); }
