@@ -11,16 +11,14 @@ import org.kisst.item4j.struct.Struct;
 import org.kisst.pko4j.PkoTable.KeyRef;
 
 public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>> extends SchemaObject {
-	public final MT model;
 	public final PkoTable<MT, OT> table;
 	public final int _pkoVersion;
 	public final int _crudObjectVersion; //for backward compatibility
 	public final String _id;
 	public final Instant creationDate;
 	public final Instant modificationDate;
-	public  PkoObject(MT model, PkoTable<MT,OT> table, Struct data) {
+	public  PkoObject(PkoTable<MT,OT> table, Struct data) {
 		super(table.schema);
-		this.model=model;
 		this.table=table;
 		this._pkoVersion=getPkoVersionOf(data);
 		this._crudObjectVersion=_pkoVersion;
@@ -50,7 +48,7 @@ public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>
 
 	public OT changeField(HasName field, Object value) {
 		//System.out.println("Changing "+field+" to "+value);
-		return model.construct(table.getElementClass(), new MultiStruct( 
+		return table.model.construct(table.getElementClass(), new MultiStruct( 
 			new SingleItemStruct(field.getName(), value),
 			this
 		));
