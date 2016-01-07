@@ -8,7 +8,6 @@ import org.kisst.item4j.Item;
 import org.kisst.item4j.struct.MultiStruct;
 import org.kisst.item4j.struct.SingleItemStruct;
 import org.kisst.item4j.struct.Struct;
-import org.kisst.pko4j.PkoTable.KeyRef;
 
 public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>> extends SchemaObject {
 	public final PkoTable<MT, OT> table;
@@ -25,12 +24,12 @@ public abstract class PkoObject<MT extends PkoModel, OT extends PkoObject<MT,OT>
 		this._id=createUniqueKey(data);
 		this.creationDate=new ObjectId(_id).getDate().toInstant();
 		this.modificationDate=(Instant) data.getDirectFieldValue("savedModificationDate", Instant.now());
-		//System.out.println(data);
 	}
 	public String getKey() { return _id;} 
-	protected KeyRef<MT,OT> createRef() { return new KeyRef<MT,OT>(table, _id); }
-	public KeyRef<MT,OT> getRef() { return table.findRef(_id);} 
-	//public<T extends PkoObject<MT,OT>> KeyRef<MT, OT> getRef() { return (KeyRef<MT, OT>) table.createRef(_id);}
+	
+
+	abstract public PkoRef<MT,OT> getRef(); 
+
 	protected String createUniqueKey(Struct data) {
 		String key= Item.asString(data.getDirectFieldValue("_id",null)); 
 		if (key==null)

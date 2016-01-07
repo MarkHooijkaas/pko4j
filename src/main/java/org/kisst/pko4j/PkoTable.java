@@ -1,7 +1,6 @@
 package org.kisst.pko4j;
 
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.kisst.item4j.ImmutableSequence;
 import org.kisst.item4j.Schema.Field;
@@ -18,13 +17,13 @@ import org.slf4j.LoggerFactory;
 public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implements TypedSequence<T> {
 	public static final Logger logger = LoggerFactory.getLogger(PkoTable.class);
 	
+
 	public final MT model;
 	public final PkoSchema<MT, T> schema;
 	private final String name;
 	final StructStorage storage;
 	private final UniqueIndex<MT, T> objects;
 	private final ChangeHandler<MT, T>[] indices;
-	private final ConcurrentHashMap<String, KeyRef<MT,T>> refs = new ConcurrentHashMap<>();
 
 	private boolean alwaysCheckId=true;
 	@SuppressWarnings("unchecked")
@@ -38,16 +37,6 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 	}
 	// This can not be done in the constructor, because then the KeyObjects will have a null table
 
-	public void createRefs() { 
-		TypedSequence<Struct> seq = storage.findAll();
-		for (Struct rec:seq) {
-			try {
-				T obj=createObject(rec);
-				refs.put(obj._id, obj.createRef());
-			}
-			catch (RuntimeException e) { e.printStackTrace(); /*ignore*/ } // TODO: return dummy activity
-		}
-	}
 	public void loadFromStorage() { 
 		//System.out.println("Loading all "+name+" records to cache");
 		TypedSequence<Struct> seq = storage.findAll();
@@ -63,15 +52,12 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 	public PkoSchema<MT, T> getSchema() { return schema; }
 	public String getName() { return name; }
 	public String getKey(T obj) { return obj._id; }
-	public KeyRef<MT, T> findRef(String key) { return (KeyRef<MT, T>) refs.get(key); }
 
 	public T createObject(Struct doc) { return schema.createObject(model, doc); }
 
 	public synchronized void create(T newValue) {
-		if (executeChange(new Change(null,newValue))) {
-			refs.put(newValue._id, newValue.createRef());
+		if (executeChange(new Change(null,newValue)))
 			storage.create(newValue);
-		}
 	}
 
 	public T read(String key) {
@@ -120,36 +106,10 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 	
 	
 	public synchronized void delete(T oldValue) {
-		if (executeChange(new Change(oldValue,null))) {
-			refs.remove(oldValue._id);
+		if (executeChange(new Change(oldValue,null)))
 			storage.delete(oldValue);
-		}
 	}
 
-	public static class KeyRef<MT extends PkoModel, TT extends PkoObject<MT,TT>> {
-		public final PkoTable<MT, TT> table;
-		public final String _id;
-		protected KeyRef(PkoTable<MT, TT> table, String _id) { 
-			this.table=table; 
-			this._id=_id; 
-		}
-		public TT get() { return table.read(_id); }
-		public TT get0() { return table.readOrNull(_id); }
-		@Override public String toString() { return _id; } //return "Ref("+table.getName()+":"+_id+")";}
-		@Override public boolean equals(Object obj) {
-			if (obj==null)
-				return false;
-			if (obj==this)
-				return true;
-			if (! (obj instanceof KeyRef))
-				return false;
-			KeyRef<?,?> ref=(KeyRef<?, ?>) obj;
-			if (this.table!=ref.table)
-				return false;
-			return this._id.equals(ref._id);
-		}
-		@Override public int hashCode() { return (_id+table).hashCode(); }
-	}
 	
 
 	private void checkSameId(T oldValue, T newValue) {

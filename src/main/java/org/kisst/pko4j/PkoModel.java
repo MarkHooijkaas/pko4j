@@ -21,9 +21,6 @@ public abstract class PkoModel implements Item.Factory {
 
 	public void initModel() {
 		for (PkoTable<?,?> table: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
-			table.createRefs();
-		// Dirty hack: do it second time, so that al refs are loaded 
-		for (PkoTable<?,?> table: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
 			table.loadFromStorage();
 	}
 	public void close() {
@@ -61,6 +58,10 @@ public abstract class PkoModel implements Item.Factory {
 		return basicFactory.construct(cls, data);
 	}
 	@Override public <T> T construct(Class<?> cls, String data) { 
+		if (PkoRef.class.isAssignableFrom(cls)) {
+			Object result=ReflectionUtil.invoke(cls, null, "of", new Object[]{ this, data} );
+			return cast(result);
+		}
 		if (MyObject.class.isAssignableFrom(cls)) {
 			//System.out.println("Trying to construct "+cls.getName());
 			Constructor<?> cons=ReflectionUtil.getConstructor(cls, new Class<?>[]{ this.getClass(), String.class} );

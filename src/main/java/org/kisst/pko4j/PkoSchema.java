@@ -14,7 +14,7 @@ public class PkoSchema<MT extends PkoModel, T extends PkoObject<MT,T>> extends R
 	}
 	
 	@SuppressWarnings("unchecked")
-	public T createObject(PkoModel model, Struct doc) { 
+	public T createObject(MT model, Struct doc) { 
 		Constructor<?> cons=ReflectionUtil.getConstructor(getJavaClass(), new Class<?>[]{ model.getClass(), Struct.class} );
 		return (T) ReflectionUtil.createObject(cons, new Object[]{model, doc} );
 	}
