@@ -13,7 +13,7 @@ import org.kisst.item4j.struct.Struct;
 import org.kisst.item4j.struct.StructHelper;
 import org.kisst.util.ReflectionUtil;
 
-public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> implements PkoObject, Struct, PkoModel.MyObject { //extends SchemaObject {
+public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> implements PkoObject, Struct, PkoModel.MyObject {
 	public final MT model;
 	public final PkoTable<OT> table;
 	public final int _pkoVersion;
