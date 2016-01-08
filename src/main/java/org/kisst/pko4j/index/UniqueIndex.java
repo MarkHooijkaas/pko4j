@@ -3,35 +3,28 @@ package org.kisst.pko4j.index;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.kisst.item4j.ImmutableSequence;
-import org.kisst.item4j.Schema;
-import org.kisst.pko4j.PkoModel;
-import org.kisst.pko4j.PkoObject;
 import org.kisst.pko4j.PkoModel.Index;
+import org.kisst.pko4j.PkoObject;
 
-public class UniqueIndex<MT extends PkoModel, T extends PkoObject<MT,T>> extends AbstractKeyedIndex<MT, T> implements Index<T> {
-	private final FieldList fields;
+public class UniqueIndex<T extends PkoObject> extends AbstractKeyedIndex<T> implements Index<T> {
 	private final boolean ignoreCase;
 	private final ConcurrentHashMap<String, T> map = new ConcurrentHashMap<String, T>();
 	
-	@SafeVarargs
-	public UniqueIndex(Schema schema, boolean ignoreCase, Schema.Field<?> ... fields) { 
-		super(schema);
+	public UniqueIndex(Class<T> recordClass, boolean ignoreCase, KeyCalculator<T> keyCalculator) { 
+		super(recordClass,keyCalculator);
 		this.ignoreCase=ignoreCase;
-		this.fields=new FieldList(fields);
 	}
 	
 	private String changeCase(String key) { return ignoreCase ? key.toLowerCase() :  key; }
-	@Override public String calcUniqueKey(T record) { return changeCase(fields.getKey(record)); }
 	
 	@Override protected void add(String key, T record) { map.put(changeCase(key), record); }
 	@Override protected void remove(String key) { map.remove(changeCase(key)); }
 	@Override public boolean keyExists(String key) { return map.containsKey(changeCase(key)); }
 
 	public ImmutableSequence<T> getAll() { 
-		return ImmutableSequence.smartCopy(null/*schema.model*/, schema.getJavaClass(), map.values());
+		return ImmutableSequence.smartCopy(null/*schema.model*/, recordClass, map.values());
 	}
 
-	public T get(String ... values) { return map.get(changeCase(fields.getKey(values))); }
-	public Schema.Field<?>[] fields() { return fields.fields(); }
+	public T get(String key) { return map.get(changeCase(key)); }
 
 }

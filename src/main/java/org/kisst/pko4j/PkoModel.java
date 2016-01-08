@@ -20,30 +20,27 @@ public abstract class PkoModel implements Item.Factory {
 	}
 
 	public void initModel() {
-		for (PkoTable<?,?> table: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
+		for (PkoTable<?> table: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
 			table.loadFromStorage();
 	}
-	public void close() {
-		for (PkoTable<?,?> table : ReflectionUtil.getAllDeclaredFieldValuesOfType(this, PkoTable.class))
-			table.close();
-	}
 
-	public StructStorage getStorage(Class<?> cls) {
+	@SuppressWarnings("unchecked")
+	public <RT extends PkoObject> StructStorage<RT> getStorage(Class<RT> cls) {
 		for (StorageOption opt: options) {
 			if (opt instanceof StructStorage && opt.getRecordClass()==cls)
-				return (StructStorage) opt;
+				return (StructStorage<RT>) opt;
 		}
 		throw new RuntimeException("Unknown Storage for type "+cls.getSimpleName());
 	}
 	@SuppressWarnings("unchecked")
-	public<MT extends PkoModel, T extends PkoObject<MT,T>> ChangeHandler<MT, T>[] getIndices(Class<?> cls) {
-		ArrayList<ChangeHandler<MT,T>> result=new ArrayList<ChangeHandler<MT,T>>();
+	public<T extends PkoObject> ChangeHandler<T>[] getIndices(Class<?> cls) {
+		ArrayList<ChangeHandler<T>> result=new ArrayList<ChangeHandler<T>>();
 		for (Object opt: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, Index.class)) {
 			if (opt instanceof Index && ((Index<?>) opt).getRecordClass()==cls) {
-				result.add((ChangeHandler<MT,T>) opt);
+				result.add((ChangeHandler<T>) opt);
 			}
 		}
-		ChangeHandler<MT,T>[] arr=new ChangeHandler[result.size()];
+		ChangeHandler<T>[] arr=new ChangeHandler[result.size()];
 		for (int i=0; i<result.size(); i++)
 			arr[i]=result.get(i);
 		return arr;
@@ -70,7 +67,7 @@ public abstract class PkoModel implements Item.Factory {
 		return basicFactory.construct(cls, data);
 	}
 
-	public interface Index<T extends PkoObject<?,?>> {
+	public interface Index<T extends PkoObject> {
 		public Class<T> getRecordClass(); 
 	}
 }

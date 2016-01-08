@@ -8,13 +8,13 @@ import org.kisst.item4j.Type;
 import org.kisst.item4j.struct.Struct;
 import org.kisst.util.ReflectionUtil;
 
-public class PkoSchema<MT extends PkoModel, T extends PkoObject<MT,T>> extends ReflectSchema<T> {
+public class PkoSchema<T extends PkoObject> extends ReflectSchema<T> {
 	public PkoSchema(Class<T> cls) { 
 		super(cls); 
 	}
 	
 	@SuppressWarnings("unchecked")
-	public T createObject(MT model, Struct doc) { 
+	public T createObject(PkoModel model, Struct doc) { 
 		Constructor<?> cons=ReflectionUtil.getConstructor(getJavaClass(), new Class<?>[]{ model.getClass(), Struct.class} );
 		return (T) ReflectionUtil.createObject(cons, new Object[]{model, doc} );
 	}

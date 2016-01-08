@@ -3,57 +3,48 @@ package org.kisst.pko4j;
 import java.util.Iterator;
 
 import org.kisst.item4j.ImmutableSequence;
-import org.kisst.item4j.Schema.Field;
-import org.kisst.item4j.SchemaBase;
 import org.kisst.item4j.seq.TypedSequence;
-import org.kisst.item4j.struct.MultiStruct;
-import org.kisst.item4j.struct.SingleItemStruct;
-import org.kisst.item4j.struct.Struct;
 import org.kisst.pko4j.index.UniqueIndex;
 import org.kisst.util.ArrayUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implements TypedSequence<T> {
+public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 	public static final Logger logger = LoggerFactory.getLogger(PkoTable.class);
-	
 
-	public final MT model;
-	public final PkoSchema<MT, T> schema;
+	public final PkoModel model;
+	public final Class<T> recordClass;
 	private final String name;
-	final StructStorage storage;
-	private final UniqueIndex<MT, T> objects;
-	private final ChangeHandler<MT, T>[] indices;
+	final StructStorage<T> storage;
+	private final UniqueIndex<T> objects;
+	private final ChangeHandler<T>[] indices;
 
 	private boolean alwaysCheckId=true;
 	@SuppressWarnings("unchecked")
-	public PkoTable(MT model, PkoSchema<MT, T> schema) { 
+	public PkoTable(PkoModel model, Class<T> recordClass) { 
 		this.model=model;
-		this.schema=schema;
-		this.name=schema.getJavaClass().getSimpleName();
-		this.storage=model.getStorage(schema.getJavaClass());
-		this.objects=new UniqueIndex<MT, T>(schema, false, new PkoSchema.IdField());
-		this.indices=(ChangeHandler<MT, T>[]) ArrayUtil.join(objects,model.getIndices(schema.getJavaClass()));
+		this.recordClass=recordClass;
+		this.storage=model.getStorage(recordClass);
+		this.name=recordClass.getSimpleName();
+		this.objects=new UniqueIndex<T>(recordClass, false, rec->rec.getKey());
+		this.indices=(ChangeHandler<T>[]) ArrayUtil.join(objects,model.getIndices(recordClass));
 	}
 	// This can not be done in the constructor, because then the KeyObjects will have a null table
 
 	public void loadFromStorage() { 
 		//System.out.println("Loading all "+name+" records to cache");
-		TypedSequence<Struct> seq = storage.findAll();
-		for (Struct rec:seq) {
+		TypedSequence<T> seq = storage.findAll(model);
+		for (T rec:seq) {
 			try {
-				T obj=createObject(rec);
-				executeChange(new Change(null,obj));
+				if (rec.getKey()==null) 
+					System.out.println("rec=null"+rec);
+				else
+					executeChange(new Change(null,rec));
 			}
 			catch (RuntimeException e) { e.printStackTrace(); /*ignore*/ } // TODO: return dummy activity
 		}
 	}
-	public void close() { storage.close(); }
-	public PkoSchema<MT, T> getSchema() { return schema; }
 	public String getName() { return name; }
-	public String getKey(T obj) { return obj._id; }
-
-	public T createObject(Struct doc) { return schema.createObject(model, doc); }
 
 	public synchronized void create(T newValue) {
 		if (executeChange(new Change(null,newValue)))
@@ -78,75 +69,47 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 		if (executeChange(new Change(oldValue,newValue)))
 			storage.update(oldValue, newValue); 
 	}
-	public synchronized void updateFields(T oldValue, Struct newFields) { 
-		update(oldValue, createObject(new MultiStruct(newFields, oldValue))); 
-	}
-	public synchronized <FT> void updateField(T oldValue, Field<FT> field, Object newValue) { 
-		updateFields(oldValue, new SingleItemStruct(field.getName(),newValue)); 
-	}
-	public synchronized <ST> void addSequenceItem(T oldValue, SchemaBase.SequenceField<ST> field, ST value) {
-		ImmutableSequence<ST> oldSequence = field.getSequence(model, oldValue);
-		ImmutableSequence<ST> newSequence = oldSequence.growTail(value);
-		updateField(oldValue, field, newSequence);
-	}
-	public synchronized <ST> int removeSequenceItem(T oldValue, SchemaBase.SequenceField<ST> field, ST value) {
-		ImmutableSequence<ST> oldSequence = field.getSequence(model, oldValue);
-		int index=0;
-		for (ST it: oldSequence) {
-			if (it.equals(value)) { // TODO: will equals work?
-				ImmutableSequence<ST> newSequence = oldSequence.remove(index);
-				updateField(oldValue, field, newSequence);
-				return 1;
-			}
-			index++;
-		}
-		return 0;
-	}
 
-	
-	
 	public synchronized void delete(T oldValue) {
 		if (executeChange(new Change(oldValue,null)))
 			storage.delete(oldValue);
 	}
-
 	
 
 	private void checkSameId(T oldValue, T newValue) {
 		if (! alwaysCheckId)
 			return;
-		String newId = newValue._id;
+		String newId = newValue.getKey();
 		if (newId!=null) {
-			String oldId = oldValue._id;
+			String oldId = oldValue.getKey();
 			if (!newId.equals(oldId))
 				throw new IllegalArgumentException("Trying to update object with id "+oldId+" with object with id "+newId+": "+oldValue+"->"+newValue);
 		}
 	}
-	public TypedSequence<T> findAll() {
-		return ImmutableSequence.smartCopy(model, schema.getJavaClass(),objects.getAll());
+	public TypedSequence<T> findAll() {  
+		return ImmutableSequence.smartCopy(model, recordClass,objects.getAll());
 	}
 
 
 	@Override public int size() { return findAll().size();}
 	@Override public Object getObject(int index) { return findAll().get(index); }
 	@Override public Iterator<T> iterator() { return findAll().iterator(); }
-	@SuppressWarnings("unchecked")
-	@Override public Class<T> getElementClass() { return (Class<T>) schema.getJavaClass(); }
+	@Override public Class<T> getElementClass() { return recordClass; }
 	
 	public class Change {
 		public final T oldRecord;
 		public final T newRecord;
 		public Change(T oldRecord, T newRecord) { this.oldRecord=oldRecord; this.newRecord=newRecord; }
 		@Override public String toString() {
-			String oldId=oldRecord==null? "null" : oldRecord._id;
-			String newId=newRecord==null? "null" : newRecord._id;
+			String oldId=oldRecord==null? "null" : oldRecord.getKey();
+			String newId=newRecord==null? "null" : newRecord.getKey();
 			return "Change("+oldId+","+newId+")"; 
 		} 
 	}
-	public interface ChangeHandler<MT extends PkoModel, TT extends PkoObject<MT,TT>> {
-		public boolean allow(PkoTable<MT, TT>.Change change); 
-		public void commit(PkoTable<MT, TT>.Change change); 
-		public void rollback(PkoTable<MT, TT>.Change change); 
+	public interface ChangeHandler<TT extends PkoObject> {
+		public boolean allow(PkoTable<TT>.Change change); 
+		public void commit(PkoTable<TT>.Change change); 
+		public void rollback(PkoTable<TT>.Change change); 
 	}
 
 	private final static Logger changeLogger = LoggerFactory.getLogger(PkoTable.Change.class);
@@ -160,7 +123,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 
 	private boolean allow(Change change) {
 		changeLogger.debug("asking to allow {}",change);
-		for (ChangeHandler<MT, T> res : indices) {
+		for (ChangeHandler<T> res : indices) {
 			try { 
 				changeLogger.debug("asking {}",res);
 				if (! res.allow(change)) {
@@ -180,7 +143,7 @@ public class PkoTable<MT extends PkoModel, T extends PkoObject<MT, T>> implement
 	private boolean commmit(Change change) {
 		changeLogger.debug("commiting {}",change);
 		for (int index=0; index<indices.length; index++) {
-			ChangeHandler<MT, T> res = indices[index];
+			ChangeHandler<T> res = indices[index];
 			changeLogger.debug("commiting in {}",res);
 			try { res.commit(change); } 
 			catch(RuntimeException e) { 

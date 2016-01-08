@@ -1,15 +1,17 @@
 package org.kisst.pko4j;
 
-public class PkoRef<MT extends PkoModel, T extends PkoObject<MT, T>>  {
-	public final String _id;
-	public final PkoTable<MT, T> table;
+public class PkoRef<T extends PkoObject>  {
+	private final String key;
+	public final PkoTable<T> table;
 
-	protected PkoRef(PkoTable<MT, T> table, String _id) { this.table=table; this._id=_id; }
+	protected PkoRef(PkoTable<T> table, String key) { this.table=table; this.key=key; assert table!=null; assert key!=null;	}
 	
-	public T get() { return table.read(_id); }
-	public T get0() { return table.readOrNull(_id); }
+	public T get() { return table.read(key); }
+	public T get0() { return table.readOrNull(key); }
+	public String getKey() { return key; }
+	public boolean refersTo(T rec) { return key.equals(rec.getKey()); }
 
-	@Override public String toString() { return _id; } //return "Ref("+table.getName()+":"+_id+")";}
+	@Override public String toString() { return key; } //return "Ref("+table.getName()+":"+_id+")";}
 	@Override public boolean equals(Object obj) {
 		if (obj==null)
 			return false;
@@ -17,10 +19,10 @@ public class PkoRef<MT extends PkoModel, T extends PkoObject<MT, T>>  {
 			return true;
 		if (! (obj instanceof PkoRef))
 			return false;
-		PkoRef<?,?> ref=(PkoRef<?,?>) obj;
+		PkoRef<?> ref=(PkoRef<?>) obj;
 		if (this.table!=ref.table)
 			return false;
-		return this._id.equals(ref._id);
+		return this.key.equals(ref.key);
 	}
-	@Override public int hashCode() { return (_id+table).hashCode(); }
+	@Override public int hashCode() { return (key+table).hashCode(); }
 }

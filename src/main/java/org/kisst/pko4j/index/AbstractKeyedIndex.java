@@ -1,25 +1,26 @@
 package org.kisst.pko4j.index;
 
-import org.kisst.item4j.Schema;
-import org.kisst.pko4j.PkoModel;
 import org.kisst.pko4j.PkoObject;
 import org.kisst.pko4j.PkoTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractKeyedIndex<MT extends PkoModel, T extends PkoObject<MT,T>> extends Index<MT, T> {
+public abstract class AbstractKeyedIndex<T extends PkoObject> extends Index<T> {
 	public final static Logger logger = LoggerFactory.getLogger(AbstractKeyedIndex.class);
 
-	public AbstractKeyedIndex(Schema schema) { 
-		super(schema);
-	}
-	abstract protected String calcUniqueKey(T record);
+	@FunctionalInterface
+	public interface KeyCalculator<TT extends PkoObject> { String calcKey(TT rec); }
+
+	private final KeyCalculator<T> keyCalculator;
+	
+	public AbstractKeyedIndex(Class<T> recordClass, KeyCalculator<T> keyCalculator) { super(recordClass); this.keyCalculator=keyCalculator;}
+	protected String calcUniqueKey(T record) { return keyCalculator.calcKey(record); }
 	abstract  protected void add(String key, T record);
 	abstract  protected void remove(String key);
 	abstract boolean keyExists(String key);
 
 
-	@Override public boolean allow(PkoTable<MT, T>.Change change) {
+	@Override public boolean allow(PkoTable<T>.Change change) {
 		if (change.oldRecord==null) // create
 			return ! keyExists(calcUniqueKey(change.newRecord));
 		else if (change.newRecord==null) {// delete
@@ -45,7 +46,7 @@ public abstract class AbstractKeyedIndex<MT extends PkoModel, T extends PkoObjec
 	}
 	
 
-	@Override public void commit(PkoTable<MT, T>.Change change) {
+	@Override public void commit(PkoTable<T>.Change change) {
 		logger.debug("committing {}",change);
 		// TODO: should we check the prepare again??
 		if (change.oldRecord!=null) {
@@ -60,7 +61,7 @@ public abstract class AbstractKeyedIndex<MT extends PkoModel, T extends PkoObjec
 		}
 	}
 
-	@Override public void rollback(PkoTable<MT, T>.Change change) {
+	@Override public void rollback(PkoTable<T>.Change change) {
 		if (change.newRecord!=null) {
 			String newkey = calcUniqueKey(change.newRecord);
 			logger.info("rollback of adding unique key {}",newkey);
