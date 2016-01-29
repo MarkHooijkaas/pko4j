@@ -5,7 +5,6 @@ import org.kisst.item4j.seq.TypedSequence;
 public interface StructStorage<T extends PkoObject> extends StorageOption<T> {
 	public Class<T> getRecordClass();
 	public void create(T value);
-	//public T read(String key);
 	public void update(T oldValue, T newValue);
 	public void delete(T oldValue);
 
