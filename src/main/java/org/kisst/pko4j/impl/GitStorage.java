@@ -12,6 +12,7 @@ import org.kisst.item4j.struct.ReflectStruct;
 import org.kisst.util.FileUtil;
 
 public class GitStorage implements Runnable {
+	private final int dirLength;
 	private final Git git;
 	private final ArrayBlockingQueue<Commit> queue=new ArrayBlockingQueue<>(10);
 	
@@ -78,7 +79,7 @@ public class GitStorage implements Runnable {
 				try {
 					for (FileChange c: changes) {
 						c.prepareCommit();
-						git.add().addFilepattern(c.file.getAbsolutePath());
+						git.add().addFilepattern(c.file.getAbsolutePath().substring(dirLength)).call();
 					}
 					//git.add().addFilepattern(".").call();
 					git.commit().setAuthor(user,mail).setMessage(comment).call();
@@ -99,6 +100,7 @@ public class GitStorage implements Runnable {
 		}
 	}
 	public GitStorage(File dir) {
+		this.dirLength=dir.getAbsolutePath().length()+1;
 		try {
 			git = Git.open(dir);
 			new Thread(this).start();
