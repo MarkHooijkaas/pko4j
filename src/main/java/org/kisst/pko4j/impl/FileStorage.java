@@ -24,7 +24,6 @@ import org.kisst.util.FileUtil;
 
 public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	public final PkoSchema<T> schema;
-	private final String domain="@wikivents.nl";
 
 	private final File dir;
 	private final String name;
@@ -137,7 +136,7 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 			if (callinfo.data!=null)
 				data=callinfo.data;
 			String comment = action+" on "+data;
-			return git.createCommit("ip:"+callinfo.ip, callinfo.user+domain ,comment);
+			return git.createCommit(callinfo.user, callinfo.ip,comment);
 		}
 		catch (Exception e) { throw new RuntimeException(e); }
 	}
