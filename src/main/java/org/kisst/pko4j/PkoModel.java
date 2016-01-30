@@ -12,10 +12,10 @@ public abstract class PkoModel implements Item.Factory {
 	public interface MyObject {}
 
 	
-	private final StorageOption[] options;
+	private final StorageOption<?>[] options;
 
 	public PkoModel() { this(new StorageOption[0]); }
-	public PkoModel(StorageOption[] options) {
+	public PkoModel(StorageOption<?>[] options) {
 		this.options=options;
 	}
 
@@ -26,7 +26,7 @@ public abstract class PkoModel implements Item.Factory {
 
 	@SuppressWarnings("unchecked")
 	public <RT extends PkoObject> StructStorage<RT> getStorage(Class<RT> cls) {
-		for (StorageOption opt: options) {
+		for (StorageOption<?> opt: options) {
 			if (opt instanceof StructStorage && opt.getRecordClass()==cls)
 				return (StructStorage<RT>) opt;
 		}
@@ -46,23 +46,16 @@ public abstract class PkoModel implements Item.Factory {
 		return arr;
 	}
 
-	@Override public <T> T construct(Class<?> cls, Struct data) {
+	@Override public <T> T construct(Class<?> cls, Object data) {
 		if (MyObject.class.isAssignableFrom(cls)) {
 			//System.out.println("Trying to construct "+cls.getName());
 			Constructor<?> cons=ReflectionUtil.getConstructor(cls, new Class<?>[]{ this.getClass(), Struct.class} );
-			return cast(ReflectionUtil.createObject(cons, new Object[] {this, data}));
+			if (cons!=null)
+				return cast(ReflectionUtil.createObject(cons, new Object[] {this, data}));
 		}
-		return basicFactory.construct(cls, data);
-	}
-	@Override public <T> T construct(Class<?> cls, String data) { 
 		if (PkoRef.class.isAssignableFrom(cls)) {
 			Object result=ReflectionUtil.invoke(cls, null, "of", new Object[]{ this, data} );
 			return cast(result);
-		}
-		if (MyObject.class.isAssignableFrom(cls)) {
-			//System.out.println("Trying to construct "+cls.getName());
-			Constructor<?> cons=ReflectionUtil.getConstructor(cls, new Class<?>[]{ this.getClass(), String.class} );
-			return cast(ReflectionUtil.createObject(cons, new Object[] {this, data}));
 		}
 		return basicFactory.construct(cls, data);
 	}

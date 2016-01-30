@@ -4,7 +4,6 @@ import java.lang.reflect.Constructor;
 
 import org.kisst.item4j.Item;
 import org.kisst.item4j.ReflectSchema;
-import org.kisst.item4j.Type;
 import org.kisst.item4j.struct.Struct;
 import org.kisst.util.ReflectionUtil;
 
@@ -24,8 +23,8 @@ public class PkoSchema<T extends PkoObject> extends ReflectSchema<T> {
 	//public IdField getKeyField() { return _id;}
 
 	public static class IdField extends BasicField<String> {
-		public IdField() { super(Type.javaString, "_id"); }
-		public IdField(String name) { super(Type.javaString, name); }
+		public IdField() { super(String.class, "_id"); }
+		public IdField(String name) { super(String.class, name); }
 		public String getString(Struct data) { return Item.asString(data.getDirectFieldValue(name)); }; 
 	}
 }
