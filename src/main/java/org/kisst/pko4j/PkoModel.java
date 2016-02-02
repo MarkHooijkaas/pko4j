@@ -46,16 +46,16 @@ public abstract class PkoModel implements Item.Factory {
 		return arr;
 	}
 
-	@Override public <T> T construct(Class<?> cls, Object data) {
+	@Override public Object construct(Class<?> cls, Object data) {
 		if (MyObject.class.isAssignableFrom(cls)) {
 			//System.out.println("Trying to construct "+cls.getName());
 			Constructor<?> cons=ReflectionUtil.getConstructor(cls, new Class<?>[]{ this.getClass(), Struct.class} );
 			if (cons!=null)
-				return cast(ReflectionUtil.createObject(cons, new Object[] {this, data}));
+				return ReflectionUtil.createObject(cons, new Object[] {this, data});
 		}
 		if (PkoRef.class.isAssignableFrom(cls)) {
 			Object result=ReflectionUtil.invoke(cls, null, "of", new Object[]{ this, data} );
-			return cast(result);
+			return result;
 		}
 		return basicFactory.construct(cls, data);
 	}

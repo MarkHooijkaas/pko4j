@@ -57,14 +57,16 @@ public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> 
 	}
 
 	public OT changeField(HasName field, Object value) { return changeField(field.getName(), value); }
+	@SuppressWarnings("unchecked")
 	public OT changeField(String fieldName, Object value) {
-		return model.construct(table.getElementClass(), new MultiStruct( 
+		return (OT) model.construct(table.getElementClass(), new MultiStruct( 
 			new SingleItemStruct(fieldName, value),
 			this
 		));
 	}
+	@SuppressWarnings("unchecked")
 	public OT changeFields(Struct newFields) { 
-		return model.construct(table.getElementClass(), new MultiStruct(
+		return (OT) model.construct(table.getElementClass(), new MultiStruct(
 			newFields,
 			this
 		));
