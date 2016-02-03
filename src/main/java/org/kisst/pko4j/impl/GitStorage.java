@@ -7,8 +7,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.kisst.item4j.ImmutableSequence;
 import org.kisst.item4j.struct.ReflectStruct;
+import org.kisst.pko4j.StructStorage.HistoryItem;
 import org.kisst.util.FileUtil;
 
 public class GitStorage implements Runnable {
@@ -109,4 +114,28 @@ public class GitStorage implements Runnable {
 	}
 
 	public Commit createCommit(String user, String ip,String comment) { return new Commit(user,ip,comment); }
+
+	public ImmutableSequence<HistoryItem> getHistory(File ... files) {
+		ArrayList<HistoryItem> result= new ArrayList<>();
+		try {
+			LogCommand logCommand = git.log();
+			for (File file:files)
+				logCommand.addPath(file.getAbsolutePath().substring(dirLength));
+			Iterable<RevCommit> hist = logCommand.call();
+			for (RevCommit comm : hist) {
+				String message=comm.getFullMessage();
+				if (message.startsWith("handle"))
+					message=message.substring(6);
+				PersonIdent ident = comm.getAuthorIdent();
+				result.add(new HistoryItem(
+					ident.getWhen().toInstant(),
+					ident.getName(),
+					ident.getEmailAddress(),
+					message
+				));
+			}
+		}
+		catch (GitAPIException e) { throw new RuntimeException(e);}
+		return ImmutableSequence.smartCopy(null,HistoryItem.class, result);
+	}
 }

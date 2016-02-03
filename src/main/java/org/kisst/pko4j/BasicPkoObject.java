@@ -11,6 +11,7 @@ import org.kisst.item4j.struct.MultiStruct;
 import org.kisst.item4j.struct.SingleItemStruct;
 import org.kisst.item4j.struct.Struct;
 import org.kisst.item4j.struct.StructHelper;
+import org.kisst.pko4j.StructStorage.HistoryItem;
 import org.kisst.util.ReflectionUtil;
 
 public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> implements PkoObject, Struct, PkoModel.MyObject {
@@ -94,4 +95,6 @@ public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> 
 	public String readBlob(String path) { return table.storage.readBlob(_id, path); }
 	public void writeBlob(String path, String blob) { table.storage.writeBlob(_id, path, blob); }
 	public void appendBlob(String path, String blob) { table.storage.appendBlob(_id, path, blob); }
+	public ImmutableSequence<HistoryItem> getHistory(String path) { return table.storage.getHistory(_id, path); }
+	public ImmutableSequence<HistoryItem> getHistory() { return table.storage.getHistory(_id); }
 }

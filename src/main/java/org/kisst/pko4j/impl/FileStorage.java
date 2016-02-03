@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.kisst.item4j.ImmutableSequence;
 import org.kisst.item4j.json.JsonOutputter;
 import org.kisst.item4j.json.JsonParser;
 import org.kisst.item4j.seq.ArraySequence;
@@ -152,5 +153,12 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	public void appendBlob(String key, String path, String blob) {
 		File f = getFile(key, path);
 		FileUtil.appendString(f, blob);
+	}
+	
+	@Override public ImmutableSequence<HistoryItem> getHistory(String key, String path) {
+		return git.getHistory(getFile(key,path), new File(dir, key+".rec"));
+	}
+	@Override public ImmutableSequence<HistoryItem> getHistory(String key) {
+		return git.getHistory(getFile(key,"record.dat"), new File(dir, key+".rec"));
 	}
 }
