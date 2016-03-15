@@ -17,8 +17,6 @@ import org.kisst.util.ReflectionUtil;
 public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> implements PkoObject, Struct, PkoModel.MyObject {
 	public final MT model;
 	public final PkoTable<OT> table;
-	public final int _pkoVersion;
-	public final int _crudObjectVersion; //for backward compatibility
 	public final String _id;
 	public final Instant creationDate;
 	public final Instant modificationDate;
@@ -26,8 +24,6 @@ public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> 
 		//super(table.schema);
 		this.model=model;
 		this.table=table;
-		this._pkoVersion=getPkoVersionOf(data);
-		this._crudObjectVersion=_pkoVersion;
 		this._id=createUniqueKey(data);
 		this.creationDate=new ObjectId(_id).getDate().toInstant();
 		this.modificationDate=(Instant) data.getDirectFieldValue("savedModificationDate", Instant.now());
@@ -48,22 +44,14 @@ public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> 
 	}
 	protected String uniqueKey() { return new ObjectId().toHexString();}
 
-	
-	public int getPkoVersion() { return 0;}
-	public int getPkoVersionOf(Struct data) { 
-		Object version = data.getDirectFieldValue("_crudObjectVersion", "0");
-		if ("UNKNOWN_FIELD".equals(version))
-			return getPkoVersion();
-		return Integer.parseInt(""+version);
-	}
-
 	public OT changeField(HasName field, Object value) { return changeField(field.getName(), value); }
 	@SuppressWarnings("unchecked")
 	public OT changeField(String fieldName, Object value) {
-		return (OT) model.construct(table.getElementClass(), new MultiStruct( 
+		Struct struc= new MultiStruct( 
 			new SingleItemStruct(fieldName, value),
 			this
-		));
+		);
+		return (OT) model.construct(table.getElementClass(), struc);
 	}
 	@SuppressWarnings("unchecked")
 	public OT changeFields(Struct newFields) { 
@@ -76,7 +64,8 @@ public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> 
 	public <ST> OT addSequenceItem(SchemaBase.SequenceField<ST> field, ST value) {
 		ImmutableSequence<ST> oldSequence = field.getSequence(model, this);
 		ImmutableSequence<ST> newSequence = oldSequence.growTail(value);
-		return changeField(field, newSequence);
+		OT result= changeField(field, newSequence);
+		return result;
 	}
 	@SuppressWarnings("unchecked")
 	public  <ST> OT removeSequenceItem(SchemaBase.SequenceField<ST> field, ST value) {

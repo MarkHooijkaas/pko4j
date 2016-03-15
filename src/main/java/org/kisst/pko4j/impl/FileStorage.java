@@ -58,8 +58,15 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 		if (key==null)
 			key=createUniqueKey();
 		createCommit("create", value)
-			.newFile(getFile(value), outputter.createString(value))
+			.newFile(getFile(value), createSaveString(value))
 			.enqueue();
+	}
+	
+	private String createSaveString(T value) {
+		String result=outputter.createString(value);
+		if (schema.getCurrentVersion()==0)
+			return result;
+		return "{pkoVersion="+schema.getCurrentVersion()+",\n"+result.substring(1);
 	}
 	
 	private static AtomicInteger number=new AtomicInteger(new Random().nextInt(13));
@@ -80,7 +87,7 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	@Override public void update(T oldValue, T newValue) {
 		// The newValue may contain an id, but that is ignored
 		createCommit("update "+name,oldValue)
-			.changeFile(getFile(oldValue), outputter.createString(newValue))
+			.changeFile(getFile(oldValue), createSaveString(newValue))
 			.enqueue();
 	}
 	@Override public void delete(T oldValue)  {
@@ -120,7 +127,9 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 				count++;
 				key=key.substring(0,key.length()-4);
 				Struct doc=createStruct(newest);
-				list.add(schema.createObject(model, doc));
+
+				int version=getPkoVersionOf(doc);
+				list.add(schema.createObject(model, doc, version));
 			}
 			catch (Exception e) { e.printStackTrace();}// TODO: return dummy placeholder
 		}
@@ -128,6 +137,16 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 		return new ArraySequence<T>(cls,list);
 	}
 
+	private int getPkoVersionOf(Struct data) { 
+		Object version = data.getDirectFieldValue("pkoVersion",Struct.UNKNOWN_FIELD);
+		if (version instanceof String && ! "UNKNOWN_FIELD".equals(version))
+			return Integer.parseInt(""+version);
+		version = data.getDirectFieldValue("_crudObjectVersion", "0");
+		if ("UNKNOWN_FIELD".equals(version))
+			return 0;
+		return Integer.parseInt(""+version);
+	}
+	
 	private Commit createCommit (String action, T value) {
 		try {
 			String data = value.getName();

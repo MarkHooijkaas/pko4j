@@ -13,8 +13,11 @@ public class PkoSchema<T extends PkoObject> extends ReflectSchema<T> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public T createObject(PkoModel model, Struct doc) { 
-		Constructor<?> cons=ReflectionUtil.getConstructor(getJavaClass(), new Class<?>[]{ model.getClass(), Struct.class} );
+	public T createObject(PkoModel model, Struct doc, int version) { 
+		Constructor<?> cons=ReflectionUtil.getConstructor(getJavaClass(), new Class<?>[]{ model.getClass(), Struct.class, int.class} );
+		if (cons!=null)
+			return (T) ReflectionUtil.createObject(cons, new Object[]{model, doc, version} );
+		cons=ReflectionUtil.getConstructor(getJavaClass(), new Class<?>[]{ model.getClass(), Struct.class} );
 		return (T) ReflectionUtil.createObject(cons, new Object[]{model, doc} );
 	}
 
@@ -22,6 +25,7 @@ public class PkoSchema<T extends PkoObject> extends ReflectSchema<T> {
 	
 	//public IdField getKeyField() { return _id;}
 
+	public int getCurrentVersion() { return 0; }
 	public static class IdField extends BasicField<String> {
 		public IdField() { super(String.class, "_id"); }
 		public IdField(String name) { super(String.class, name); }
