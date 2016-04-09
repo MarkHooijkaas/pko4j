@@ -66,7 +66,7 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 		String result=outputter.createString(value);
 		if (schema.getCurrentVersion()==0)
 			return result;
-		return "{pkoVersion="+schema.getCurrentVersion()+",\n"+result.substring(1);
+		return "{\"pkoVersion\":\""+schema.getCurrentVersion()+"\",\n"+result.substring(1);
 	}
 	
 	private static AtomicInteger number=new AtomicInteger(new Random().nextInt(13));
