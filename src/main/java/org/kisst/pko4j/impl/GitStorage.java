@@ -19,7 +19,7 @@ import org.kisst.util.FileUtil;
 public class GitStorage implements Runnable {
 	private final int dirLength;
 	private final Git git;
-	private final ArrayBlockingQueue<Commit> queue=new ArrayBlockingQueue<>(10);
+	private final ArrayBlockingQueue<Commit> queue=new ArrayBlockingQueue<>(1000);
 	
 	private AtomicLong counter = new AtomicLong(System.currentTimeMillis());
 
