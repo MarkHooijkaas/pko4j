@@ -109,7 +109,8 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 	public interface ChangeHandler<TT extends PkoObject> {
 		public boolean allow(PkoTable<TT>.Change change); 
 		public void commit(PkoTable<TT>.Change change); 
-		public void rollback(PkoTable<TT>.Change change); 
+		public void rollback(PkoTable<TT>.Change change);
+		public Class<TT> getRecordClass();
 	}
 
 	private final static Logger changeLogger = LoggerFactory.getLogger(PkoTable.Change.class);

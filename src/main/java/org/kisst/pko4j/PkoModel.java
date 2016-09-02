@@ -35,8 +35,8 @@ public abstract class PkoModel implements Item.Factory {
 	@SuppressWarnings("unchecked")
 	public<T extends PkoObject> ChangeHandler<T>[] getIndices(Class<?> cls) {
 		ArrayList<ChangeHandler<T>> result=new ArrayList<ChangeHandler<T>>();
-		for (Object opt: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, Index.class)) {
-			if (opt instanceof Index && ((Index<?>) opt).getRecordClass()==cls) {
+		for (Object opt: ReflectionUtil.getAllDeclaredFieldValuesOfType(this, ChangeHandler.class)) {
+			if (opt instanceof ChangeHandler && ((ChangeHandler<?>) opt).getRecordClass()==cls) {
 				result.add((ChangeHandler<T>) opt);
 			}
 		}
