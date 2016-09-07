@@ -23,7 +23,7 @@ public  class MultiIndex<T extends PkoObject> implements PkoTable.ChangeHandler<
 		this.recordClass=recordClass;
 		this.keyCalculator=keyCalculator;
 	}
-	protected String[] calcUniqueKey(T record) { return keyCalculator.calcKey(record); }
+	protected String[] calcKeys(T record) { return keyCalculator.calcKey(record); }
 
 	@Override public Class<T> getRecordClass() { return recordClass;}
 	public ConcurrentHashMap.KeySetView<String, ImmutableSequence<T>> keySet() { return map.keySet();}
@@ -36,42 +36,28 @@ public  class MultiIndex<T extends PkoObject> implements PkoTable.ChangeHandler<
 
 	@Override public void commit(PkoTable<T>.Change change) {
 		logger.debug("committing {}", change);
-		// TODO: should we check the prepare again??
-		if (change.oldRecord != null && change.newRecord!=null)
-			change(change.oldRecord, change.newRecord);
-		else if (change.oldRecord != null)
-			remove(change.oldRecord);
-		else if (change.newRecord != null)
-			add(change.newRecord);
-	}
-
-	protected void remove(T oldRecord) {
-		for (String oldkey : calcUniqueKey(oldRecord)) {
-			removeRecord(oldRecord, oldkey);
+		String[] newList = null;
+		if (change.newRecord != null) {
+			newList = calcKeys(change.newRecord);
+			for (String newkey : newList)
+				addRecord(newkey, change.newRecord);
+		}
+		if (change.oldRecord != null){
+			for (String oldkey : calcKeys(change.oldRecord)) {
+				if (newList==null || ! contains(newList,oldkey))
+				removeRecord(oldkey, change.oldRecord);
+			}
 		}
 	}
 
-
-	protected void add(T newRecord) {
-		for (String newkey : calcUniqueKey(newRecord))
-			addRecord(newRecord, newkey);
+	private boolean contains(String[] newList, String oldkey) {
+		for (String s: newList)
+			if (oldkey.equals(s))
+				return true;
+		return false;
 	}
 
-
-	protected void change(T oldRecord, T newRecord) {
-		String[] oldKeys=calcUniqueKey(oldRecord);
-		String[] newKeys=calcUniqueKey(newRecord);
-		for (String oldKey :  oldKeys) {
-			if (!contains(newKeys,oldKey))
-				removeRecord(oldRecord, oldKey);
-		}
-		for (String newKey :  newKeys) {
-			if (!contains(oldKeys,newKey))
-				addRecord(newRecord, newKey);
-		}
-	}
-
-	private void removeRecord(T oldRecord, String oldkey) {
+	private void removeRecord(String oldkey, T oldRecord) {
 		logger.info("removing unique key {} ", oldkey);
 		ImmutableSequence<T> oldList = map.get(oldkey);
 		ImmutableSequence<T> newList = oldList.removeItem(oldRecord);
@@ -79,7 +65,7 @@ public  class MultiIndex<T extends PkoObject> implements PkoTable.ChangeHandler<
 			map.put(oldkey, newList);
 	}
 
-	private void addRecord(T newRecord, String newkey) {
+	private void addRecord(String newkey, T newRecord) {
 		logger.info("adding unique key {} ", newkey);
 		ImmutableSequence<T> oldList = map.get(newkey);
 		if (oldList==null)
@@ -88,20 +74,6 @@ public  class MultiIndex<T extends PkoObject> implements PkoTable.ChangeHandler<
 			ImmutableSequence<T> newList = oldList.growTail(newRecord);
 			map.put(newkey, newList);
 		}
-	}
-
-	public static <T> boolean contains(final T[] array, final T v) {
-		if (v == null) {
-			for (final T e : array)
-				if (e == null)
-					return true;
-		} else {
-			for (final T e : array)
-				if (e == v || v.equals(e))
-					return true;
-		}
-
-		return false;
 	}
 }
 
