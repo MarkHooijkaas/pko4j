@@ -96,7 +96,7 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 	@Override public Iterator<T> iterator() { return findAll().iterator(); }
 	@Override public Class<T> getElementClass() { return recordClass; }
 
-	public void saveAll(Iterable<T> records) { storage.saveAll(records); }
+	public void saveAll() { storage.saveAll(this); }
 
 	public class Change {
 		public final T oldRecord;
