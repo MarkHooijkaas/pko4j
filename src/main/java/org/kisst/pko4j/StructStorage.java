@@ -18,7 +18,9 @@ public interface StructStorage<T extends PkoObject> extends StorageOption<T> {
 	public void appendBlob(String key, String path, String blob);
 	public ImmutableSequence<HistoryItem> getHistory(String _id, String path);
 	public ImmutableSequence<HistoryItem> getHistory(String _id);
-	
+
+	public void saveAll(Iterable<T> records);
+
 	public static class HistoryItem {
 		public final Instant time;
 		public final String user;

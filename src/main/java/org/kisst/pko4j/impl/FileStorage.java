@@ -36,7 +36,6 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	//private final Repository gitrepo;
 
 	
-	
 	@SuppressWarnings("unchecked")
 	public FileStorage(PkoSchema<T> schema, GitStorage git, File maindir) {
 		this.schema=schema;
@@ -50,7 +49,7 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	public FileStorage(PkoSchema<T> schema, Props props, GitStorage git) {
 		this(schema, git, new File(props.getString("datadir", "data"))); 
 	}
-	
+
 	@Override public Class<T> getRecordClass() { return cls; }
 
 	@Override public void create(T value) {
@@ -149,7 +148,9 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	
 	private Commit createCommit (String action, T value) {
 		try {
-			String data = value.getName();
+			String data = "all";
+			if (value!=null)
+				data=value.getName();
 			CallInfo callinfo = CallInfo.instance.get();
 			if (callinfo.action!=null)
 				action=callinfo.action;
@@ -180,4 +181,12 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	@Override public ImmutableSequence<HistoryItem> getHistory(String key) {
 		return git.getHistory(getFile(key,"record.dat"), new File(dir, key+".rec"));
 	}
+
+	public void saveAll(Iterable<T> records) {
+		Commit comm = createCommit("save", null);
+		for (T rec: records)
+			comm.changeFile(getFile(rec), createSaveString(rec));
+		comm.enqueue();
+	}
+
 }
