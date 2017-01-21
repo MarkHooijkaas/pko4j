@@ -77,7 +77,7 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	private Struct createStruct(File f) {
 		Struct result = new MultiStruct(
 				parser.parse(f),
-				new SingleItemStruct("savedModificationDate", Instant.ofEpochMilli(f.lastModified()))
+				new SingleItemStruct("modificationDate", Instant.ofEpochMilli(f.lastModified()))
 				);
 		return result;
 	}

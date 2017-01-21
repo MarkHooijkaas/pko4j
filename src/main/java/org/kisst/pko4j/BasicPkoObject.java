@@ -26,13 +26,14 @@ public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> 
 		this.table=table;
 		this._id=createUniqueKey(data);
 		this.creationDate=new ObjectId(_id).getDate().toInstant();
-		this.modificationDate=(Instant) data.getDirectFieldValue("savedModificationDate", Instant.now());
+		this.modificationDate=Item.asInstant(data.getDirectFieldValue("modificationDate", creationDate));
 	}
 	public String getKey() { return _id;} 
 	@Override public String toString() { return StructHelper.toShortString(this); }
 	//@Override public Iterable<String> fieldNames() { return schema.fieldNames(); }
 	@Override public Object getDirectFieldValue(String name) { return ReflectionUtil.getFieldValueOrUnknownField(this, name); }
-
+	//@Override public Instant getCreationDate() { return this.creationDate; }
+	//@Override public Instant getModificationDate() { return this.modificationDate;}
 
 	abstract public PkoRef<OT> getRef(); 
 

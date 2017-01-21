@@ -1,5 +1,6 @@
 package org.kisst.pko4j;
 
+import java.time.Instant;
 import java.util.Iterator;
 
 import org.kisst.item4j.ImmutableSequence;
@@ -65,6 +66,7 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 		return result;
 	}
 	public synchronized void update(T oldValue, T newValue) {
+		newValue=(T) newValue.changeField("modificationDate", Instant.now());
 		checkSameId(oldValue, newValue);
 		if (executeChange(new Change(oldValue,newValue)))
 			storage.update(oldValue, newValue); 
