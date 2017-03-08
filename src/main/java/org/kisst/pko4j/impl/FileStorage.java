@@ -148,7 +148,7 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	
 	private Commit createCommit (String action, T value) {
 		try {
-			String data = "all";
+			String data = "all "+this.name;
 			if (value!=null)
 				data=value.getName();
 			CallInfo callinfo = CallInfo.instance.get();
