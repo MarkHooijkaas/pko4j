@@ -15,6 +15,8 @@ import org.kisst.pko4j.StructStorage.HistoryItem;
 import org.kisst.util.ReflectionUtil;
 
 public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> implements PkoObject, Struct, PkoModel.MyObject {
+	public static final PkoSchema pkoSchema=new PkoSchema(BasicPkoObject.class);
+
 	public final MT model;
 	public final PkoTable<OT> table;
 	public final String _id;
@@ -25,8 +27,8 @@ public abstract class BasicPkoObject<MT extends PkoModel, OT extends PkoObject> 
 		this.model=model;
 		this.table=table;
 		this._id=createUniqueKey(data);
-		this.creationDate=new ObjectId(_id).getDate().toInstant();
-		this.modificationDate=Item.asInstant(data.getDirectFieldValue("modificationDate", creationDate));
+		this.creationDate=pkoSchema.creationDate.getInstant(data,new ObjectId(_id).getDate().toInstant());
+		this.modificationDate=pkoSchema.modificationDate.getInstant(data,creationDate);
 	}
 	public String getKey() { return _id;} 
 	@Override public String toString() { return StructHelper.toShortString(this); }

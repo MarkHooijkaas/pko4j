@@ -11,7 +11,13 @@ public class PkoSchema<T extends PkoObject> extends ReflectSchema<T> {
 	public PkoSchema(Class<T> cls) { 
 		super(cls); 
 	}
-	
+
+	public final IdField _id = new IdField();
+	public final InstantField creationDate = new InstantField("creationDate");
+	public final InstantField modificationDate = new InstantField("modificationDate");
+	public final IntField pkoVersion = new IntField("pkoVersion");
+
+
 	@SuppressWarnings("unchecked")
 	public T createObject(PkoModel model, Struct doc, int version) { 
 		Constructor<?> cons=ReflectionUtil.getConstructor(getJavaClass(), new Class<?>[]{ model.getClass(), Struct.class, int.class} );
@@ -29,6 +35,6 @@ public class PkoSchema<T extends PkoObject> extends ReflectSchema<T> {
 	public static class IdField extends BasicField<String> {
 		public IdField() { super(String.class, "_id"); }
 		public IdField(String name) { super(String.class, name); }
-		public String getString(Struct data) { return Item.asString(data.getDirectFieldValue(name)); }; 
+		public String getString(Struct data) { return Item.asString(data.getDirectFieldValue(name)); };
 	}
 }
