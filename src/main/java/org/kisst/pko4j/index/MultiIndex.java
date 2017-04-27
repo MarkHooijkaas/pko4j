@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public  class MultiIndex<T extends PkoObject> implements PkoTable.ChangeHandler<T> {
+	// TODO: improve to only  object Refs instead of Objects
+
 	public final static Logger logger = LoggerFactory.getLogger(MultiIndex.class);
 	private final ConcurrentHashMap<String, ImmutableSequence<T>> map = new ConcurrentHashMap<>();
 	private final Class<T> recordClass;
@@ -34,45 +36,45 @@ public  class MultiIndex<T extends PkoObject> implements PkoTable.ChangeHandler<
 	@Override public boolean allow(PkoTable<T>.Change change) { return true; }
 	@Override public void rollback(PkoTable<T>.Change change) {}
 
+
+	private static String[] emptyList=new String[0];
 	@Override public void commit(PkoTable<T>.Change change) {
 		logger.debug("committing {}", change);
-		String[] newList = null;
-		if (change.newRecord != null) {
-			newList = calcKeys(change.newRecord);
-			for (String newkey : newList)
-				addRecord(newkey, change.newRecord);
+		String[] oldList = emptyList;
+		String[] newList = emptyList;
+		if (change.oldRecord != null) {
+			for (String key : calcKeys(change.oldRecord))
+				removeRecord(key, change.oldRecord);
 		}
-		if (change.oldRecord != null){
-			for (String oldkey : calcKeys(change.oldRecord)) {
-				if (newList==null || ! contains(newList,oldkey))
-				removeRecord(oldkey, change.oldRecord);
-			}
+		if (change.newRecord != null) {
+			for (String key : calcKeys(change.newRecord))
+				addRecord(key, change.newRecord);
 		}
 	}
 
-	private boolean contains(String[] newList, String oldkey) {
-		for (String s: newList)
+	private boolean contains(String[] list, String oldkey) {
+		for (String s: list)
 			if (oldkey.equals(s))
 				return true;
 		return false;
 	}
 
-	private void removeRecord(String oldkey, T oldRecord) {
-		logger.info("removing unique key {} ", oldkey);
-		ImmutableSequence<T> oldList = map.get(oldkey);
+	private void removeRecord(String key, T oldRecord) {
+		logger.info("removing unique key {} ", key);
+		ImmutableSequence<T> oldList = map.get(key);
 		ImmutableSequence<T> newList = oldList.removeItem(oldRecord);
 		if (newList.size() != oldList.size())
-			map.put(oldkey, newList);
+			map.put(key, newList);
 	}
 
-	private void addRecord(String newkey, T newRecord) {
-		logger.info("adding unique key {} ", newkey);
-		ImmutableSequence<T> oldList = map.get(newkey);
+	private void addRecord(String key, T newRecord) {
+		logger.info("adding unique key {} ", key);
+		ImmutableSequence<T> oldList = map.get(key);
 		if (oldList==null)
-			map.put(newkey, ImmutableSequence.of(getRecordClass(), newRecord));
+			map.put(key, ImmutableSequence.of(getRecordClass(), newRecord));
 		else if (! oldList.contains(newRecord)) {
 			ImmutableSequence<T> newList = oldList.growTail(newRecord);
-			map.put(newkey, newList);
+			map.put(key, newList);
 		}
 	}
 }
