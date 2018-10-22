@@ -26,28 +26,26 @@ import org.kisst.util.FileUtil;
 public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	public final PkoSchema<T> schema;
 
-	private final File dir;
-	private final String name;
+	protected final File dir;
+	protected final String name;
 	private final JsonParser parser=new JsonParser();
 	private final JsonOutputter outputter = new JsonOutputter(null);
 	private final Class<T> cls;
-	private final GitStorage git;
-	
+
 	//private final Repository gitrepo;
 
 	
 	@SuppressWarnings("unchecked")
-	public FileStorage(PkoSchema<T> schema, GitStorage git, File maindir) {
+	public FileStorage(PkoSchema<T> schema, File maindir) {
 		this.schema=schema;
 		this.cls=(Class<T>) schema.getJavaClass();
 		this.name=cls.getSimpleName();
 		dir=new File(maindir,name);
 		if (! dir.exists())
 			dir.mkdirs();
-		this.git=git;
 	}
-	public FileStorage(PkoSchema<T> schema, Props props, GitStorage git) {
-		this(schema, git, new File(props.getString("datadir", "data"))); 
+	public FileStorage(PkoSchema<T> schema, Props props) {
+		this(schema, new File(props.getString("datadir", "data")));
 	}
 
 	@Override public Class<T> getRecordClass() { return cls; }
@@ -56,25 +54,24 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 		String key = value.getKey();
 		if (key==null)
 			key=createUniqueKey();
-		createCommit("create", value)
-			.newFile(getFile(value), createSaveString(value))
-			.enqueue();
+		writeHistoryMessage("create", value);
+		FileUtil.saveString(getFile(value), createSaveString(value));
 	}
 	
-	private String createSaveString(T value) {
+	protected String createSaveString(T value) {
 		String result=outputter.createString(value);
 		if (schema.getCurrentVersion()==0)
 			return result;
 		return "{\"pkoVersion\":\""+schema.getCurrentVersion()+"\",\n"+result.substring(1);
 	}
-	
-	private static AtomicInteger number=new AtomicInteger(new Random().nextInt(13));
-	private String createUniqueKey() {
+
+	protected static AtomicInteger number=new AtomicInteger(new Random().nextInt(13));
+	protected String createUniqueKey() {
 		int i=number.incrementAndGet();
 		return Long.toHexString(System.currentTimeMillis())+Integer.toHexString(i);
 	}
-	
-	private Struct createStruct(File f) {
+
+	protected Struct createStruct(File f) {
 		Struct result = new MultiStruct(
 				parser.parse(f),
 				new SingleItemStruct("modificationDate", Instant.ofEpochMilli(f.lastModified()))
@@ -85,22 +82,20 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	
 	@Override public void update(T oldValue, T newValue) {
 		// The newValue may contain an id, but that is ignored
-		createCommit("update "+name,oldValue)
-			.changeFile(getFile(oldValue), createSaveString(newValue))
-			.enqueue();
+		FileUtil.saveString(getFile(oldValue), createSaveString(newValue));
+		writeHistoryMessage("update "+name,oldValue);
 	}
 	@Override public void delete(T oldValue)  {
 		checkForConcurrentModification(oldValue);
-		createCommit("delete ",oldValue)
-			.deleteFile(getFile(oldValue))
-			.enqueue();
+		getFile(oldValue).delete();
+		writeHistoryMessage("delete ",oldValue);
 	}
-	private void checkForConcurrentModification(T obj) {
+	protected void checkForConcurrentModification(T obj) {
 		// TODO Auto-generated method stub
 
 	}
-	private File getFile(String key, String path) { return new File(dir, key+".dir/"+path); }
-	private File getFile(T value) { return getFile(value.getKey(), "record.dat"); }
+	protected File getFile(String key, String path) { return new File(dir, key+".dir/"+path); }
+	protected File getFile(T value) { return getFile(value.getKey(), "record.dat"); }
 
 	@Override public TypedSequence<T> findAll(PkoModel model) {
 		ArrayList<T> list=new ArrayList<>();
@@ -145,22 +140,6 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 			return 0;
 		return Integer.parseInt(""+version);
 	}
-	
-	private Commit createCommit (String action, T value) {
-		try {
-			String data = "all "+this.name;
-			if (value!=null)
-				data=value.getName();
-			CallInfo callinfo = CallInfo.instance.get();
-			if (callinfo.action!=null)
-				action=callinfo.action;
-			if (callinfo.data!=null)
-				data=callinfo.data;
-			String comment = action+" on "+data;
-			return git.createCommit(callinfo.user, callinfo.ip,comment);
-		}
-		catch (Exception e) { throw new RuntimeException(e); }
-	}
 
 	public String readBlob(String key, String path) {
 		File f = getFile(key, path);
@@ -176,17 +155,28 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 	}
 	
 	@Override public ImmutableSequence<HistoryItem> getHistory(String key, String path) {
-		return git.getHistory(getFile(key,path), new File(dir, key+".rec"));
+		return null;
 	}
 	@Override public ImmutableSequence<HistoryItem> getHistory(String key) {
-		return git.getHistory(getFile(key,"record.dat"), new File(dir, key+".rec"));
+		return null;
 	}
 
 	public void saveAll(Iterable<T> records) {
-		Commit comm = createCommit("save", null);
-		for (T rec: records)
-			comm.changeFile(getFile(rec), createSaveString(rec));
-		comm.enqueue();
+		for (T rec: records) {
+			FileUtil.saveString(getFile(rec), createSaveString(rec));
+			writeHistoryMessage("save ", rec);
+		}
 	}
 
+	private void writeHistoryMessage(String action, T value) {
+		String data = "all "+this.name;
+		CallInfo callinfo = CallInfo.instance.get();
+		if (callinfo.action!=null)
+			action=callinfo.action;
+		if (callinfo.data!=null)
+			data=callinfo.data;
+		String comment = action+" on "+data;
+		String line=System.currentTimeMillis()+";"+callinfo.user+";"+callinfo.ip+";"+comment;
+		FileUtil.appendString(getFile(value.getKey(),"history.log"), line);
+	}
 }
