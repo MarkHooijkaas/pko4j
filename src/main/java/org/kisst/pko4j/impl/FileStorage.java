@@ -176,7 +176,7 @@ public class FileStorage<T extends PkoObject> implements StructStorage<T> {
 		if (callinfo.data!=null)
 			data=callinfo.data;
 		String comment = action+" on "+data;
-		String line=System.currentTimeMillis()+";"+callinfo.user+";"+callinfo.ip+";"+comment;
+		String line=(System.currentTimeMillis()/1000)+";"+callinfo.user+";"+callinfo.ip+";"+comment+"\n";
 		FileUtil.appendString(getFile(value.getKey(),"history.log"), line);
 	}
 }

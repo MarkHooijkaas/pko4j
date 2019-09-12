@@ -101,6 +101,8 @@ public class PkoTable<T extends PkoObject> implements TypedSequence<T> {
 	public void saveAll() { storage.saveAll(this); }
 
 	public class Change {
+		//public final Instant time;
+
 		public final T oldRecord;
 		public final T newRecord;
 		public Change(T oldRecord, T newRecord) { this.oldRecord=oldRecord; this.newRecord=newRecord; }
